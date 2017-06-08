@@ -6,7 +6,7 @@ Download: https://git-scm.com/downloads
 ## kleines Git-Tutorial per Konsole
 
 ```
-1. git clone // läd Repo in aktuelles Dir
+1. git clone https://github.com/NRose/AVS_ProceduralWorldGeneration // läd Repo in aktuelles Dir
 2. git pull // vor jeder eigenständigen Änderung ausführen, um Überschreibungen zu vermeiden
 ```
 
