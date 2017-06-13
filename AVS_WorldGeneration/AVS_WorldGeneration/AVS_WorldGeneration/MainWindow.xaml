@@ -1,0 +1,25 @@
+﻿<Window x:Class="AVS_WorldGeneration.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AVS_WorldGeneration"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="635" Width="1015" KeyDown="Window_KeyDown">
+    <DockPanel>
+        <Viewport3D x:Name="vpOutputView" DockPanel.Dock="Left" Height="600" Width="800">
+
+        </Viewport3D>
+        <StackPanel DockPanel.Dock="Right" Height="600" Width="200">
+            <Label>World Generation</Label>
+            <Line Height="1" Width="180" Fill="Black"/>
+            <Label>Voronoi Generation Loop Count:</Label>
+            <TextBox x:Name="tbxVoronoiLoopCount"></TextBox>
+            <ProgressBar x:Name="pbGenerateVoronoi" Height="10"/>
+            <Button x:Name="btnGenerateVoronoi" Click="BtnGenerateVoronoi_Click">Generate Voronoi</Button>
+            <ProgressBar x:Name="pbDrawVoronoi" Height="10"/>
+            <Button x:Name="btnDrawVoronoi" Click="BtnDrawVoronoi_Click" IsEnabled="False">Draw Voronoi</Button>
+            <StatusBar Height="100"/>
+        </StackPanel>
+    </DockPanel>
+</Window>
