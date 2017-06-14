@@ -26,6 +26,7 @@ namespace AVS_WorldGeneration
         #region Voronoi Stuff
         private List<BenTools.Mathematics.Vector> m_akVectors = new List<BenTools.Mathematics.Vector>();
         private Random m_kRnd = new Random();
+        private int m_nSeed = 0;
         private double[] m_dVector;
         VoronoiGraph m_kVoronoi;
         #endregion
@@ -47,6 +48,10 @@ namespace AVS_WorldGeneration
         {
             InitializeComponent();
 
+            m_nSeed = m_kRnd.Next();
+            m_kRnd = new Random(m_nSeed);
+            tbxSeed.Text = m_nSeed.ToString();
+
             m_kMainCamera = new PerspectiveCamera();
             m_kMainCamera.FieldOfView = 60;
             vpOutputView.Camera = m_kMainCamera;
@@ -67,18 +72,37 @@ namespace AVS_WorldGeneration
 
         private void GenerateVoronoi()
         {
+            Log("Start process: Generate Voronoi", LogLevel.INFO);
+            int nSeed = 0;
+            if(!int.TryParse(tbxSeed.Text, out nSeed))
+            {
+                Log("Seed contains illegal characters!", LogLevel.WARN);
+                return;
+            }
+            m_nSeed = nSeed;
+            m_kRnd = new Random(m_nSeed);
+
+            const double dMinimum = -1.0;
+            const double dMaximum = 1.0;
+
             VoronoiProgress updatePB = pbGenerateVoronoi.SetValue;
+
             double dVoronoiCount = 0;
             if (!double.TryParse(tbxVoronoiLoopCount.Text, out dVoronoiCount))
             {
+                Log("Loop count contains illegal characters!", LogLevel.WARN);
                 return;
             }
             double dOneStep = 100.0 / (dVoronoiCount + (dVoronoiCount * 0.33f));
             double dValue = 0.0;
             pbGenerateVoronoi.Dispatcher.Invoke(updatePB, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, dValue});
+            m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMinimum, dMinimum }));
+            m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMinimum, dMaximum }));
+            m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMaximum, dMinimum }));
+            m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMaximum, dMaximum }));
             for (int i = 0; i < dVoronoiCount; i++)
             {
-                m_dVector = new double[] { m_kRnd.NextDouble() * (1.0 - -1.0) + -1.0, m_kRnd.NextDouble() * (1.0 - -1.0) + -1.0 };
+                m_dVector = new double[] { m_kRnd.NextDouble() * (dMaximum - dMinimum) + dMinimum, m_kRnd.NextDouble() * (dMaximum - dMinimum) + dMinimum };
                 m_akVectors.Add(new BenTools.Mathematics.Vector(m_dVector));
                 dValue += dOneStep;
                 pbGenerateVoronoi.Dispatcher.Invoke(updatePB, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, dValue });
@@ -93,23 +117,39 @@ namespace AVS_WorldGeneration
         private void DrawVoronoi()
         {
             MeshGeometry3D kMesh = new MeshGeometry3D();
-            /*
             m_kVoronoi.Vertizes.OrderBy(o => o[0]);
             m_kVoronoi.Vertizes.OrderByDescending(o => o[1]);
 
+            /*
             foreach (BenTools.Mathematics.Vector kVector in m_kVoronoi.Vertizes)
             {
                 Point3D p0 = new Point3D(kVector[0], kVector[1], 0.0f);
                 kMesh.TriangleIndices.Add(Helper.AddPoint(kMesh.Positions, p0));
-            }
-            */
-            
-            foreach (VoronoiEdge kEdge in m_kVoronoi.Edges)
-            {
+                
                 Point3D p0 = new Point3D(kEdge.LeftData[0], kEdge.LeftData[1], 0.0f);
                 Point3D p1 = new Point3D(kEdge.RightData[0], kEdge.RightData[1], 0.0f);
                 kMesh.TriangleIndices.Add(Helper.AddPoint(kMesh.Positions, p0));
                 kMesh.TriangleIndices.Add(Helper.AddPoint(kMesh.Positions, p1));
+            }
+            */
+            List<VoronoiEdge> akEdges = new List<VoronoiEdge>();
+            
+            foreach (VoronoiEdge kEdge in m_kVoronoi.Edges)
+            {
+                akEdges.Add(kEdge);
+            }
+
+            for(int i = 0; i < akEdges.Count-1; i++)
+            {
+                Point3D p0 = new Point3D(akEdges[i].LeftData[0], akEdges[i].LeftData[1], 0.0);
+                Point3D p1 = new Point3D(akEdges[i].RightData[0], akEdges[i].RightData[1], 0.0);
+
+                //Point3D p2 = new Point3D(akEdges[i+1].LeftData[0], akEdges[i+1].LeftData[1], 0.0);
+                Point3D p3 = new Point3D(akEdges[i+1].RightData[0], akEdges[i+1].RightData[1], 0.0);
+
+                //Point3D p4 = new Point3D(akEdges[i+2].LeftData[0], akEdges[i+2].LeftData[1], 0.0);
+                //Point3D p5 = new Point3D(akEdges[i+2].RightData[0], akEdges[i+2].RightData[1], 0.0);
+                Helper.AddTriangle(kMesh, p0, p1, p3);
             }
             
             DiffuseMaterial kSurfaceMaterial = new DiffuseMaterial(Brushes.Orange);
@@ -245,6 +285,16 @@ namespace AVS_WorldGeneration
             m_kMainCamera.Position = new Point3D(dX, dY, dZ);
             m_kMainCamera.LookDirection = new Vector3D(-dX, -dY, -dZ);
             m_kMainCamera.UpDirection = new Vector3D(0, 1, 0);
+        }
+
+        public void Log(string sLogMessage, LogLevel eLogLevel)
+        {
+            Helper.akLogger.Add(new LogItem(sLogMessage, eLogLevel));
+
+            lbxLog.ItemsSource = null;
+            lbxLog.Items.Clear();
+
+            lbxLog.ItemsSource = Helper.akLogger;
         }
     }
 }

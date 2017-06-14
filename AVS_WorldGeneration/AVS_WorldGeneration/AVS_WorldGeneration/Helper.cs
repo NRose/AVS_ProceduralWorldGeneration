@@ -9,6 +9,8 @@ namespace AVS_WorldGeneration
 {
     public static class Helper
     {
+        public static List<LogItem> akLogger = new List<LogItem>();
+
         private static Dictionary<Point3D, int> m_dicPoints = new Dictionary<Point3D, int>();
         
         public static MeshGeometry3D ToWireframe(this MeshGeometry3D kMesh, double dThickness)
