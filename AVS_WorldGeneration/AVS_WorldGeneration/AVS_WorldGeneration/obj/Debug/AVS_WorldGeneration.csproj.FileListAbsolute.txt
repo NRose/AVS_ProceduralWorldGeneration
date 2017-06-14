@@ -26,3 +26,19 @@ C:\Users\Sebastian Engfer\Downloads\AVS_WorldGeneration\AVS_WorldGeneration\AVS_
 C:\Users\Sebastian Engfer\Downloads\AVS_WorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\obj\Debug\AVS_WorldGeneration.g.resources
 C:\Users\Sebastian Engfer\Downloads\AVS_WorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\obj\Debug\AVS_WorldGeneration.Properties.Resources.resources
 C:\Users\Sebastian Engfer\Downloads\AVS_WorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\obj\Debug\AVS_WorldGeneration.csproj.GenerateResource.Cache
+C:\Users\sen\Documents\Visual Studio 2017\Projects\AVS_ProceduralWorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\bin\Debug\AVS_WorldGeneration.exe.config
+C:\Users\sen\Documents\Visual Studio 2017\Projects\AVS_ProceduralWorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\bin\Debug\AVS_WorldGeneration.exe
+C:\Users\sen\Documents\Visual Studio 2017\Projects\AVS_ProceduralWorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\bin\Debug\AVS_WorldGeneration.pdb
+C:\Users\sen\Documents\Visual Studio 2017\Projects\AVS_ProceduralWorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\obj\Debug\AVS_WorldGeneration.csprojResolveAssemblyReference.cache
+C:\Users\sen\Documents\Visual Studio 2017\Projects\AVS_ProceduralWorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\obj\Debug\MainWindow.g.cs
+C:\Users\sen\Documents\Visual Studio 2017\Projects\AVS_ProceduralWorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\obj\Debug\App.g.cs
+C:\Users\sen\Documents\Visual Studio 2017\Projects\AVS_ProceduralWorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\obj\Debug\AVS_WorldGeneration_MarkupCompile.cache
+C:\Users\sen\Documents\Visual Studio 2017\Projects\AVS_ProceduralWorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\obj\Debug\AVS_WorldGeneration_MarkupCompile.lref
+C:\Users\sen\Documents\Visual Studio 2017\Projects\AVS_ProceduralWorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\obj\Debug\MainWindow.baml
+C:\Users\sen\Documents\Visual Studio 2017\Projects\AVS_ProceduralWorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\obj\Debug\AVS_WorldGeneration.g.resources
+C:\Users\sen\Documents\Visual Studio 2017\Projects\AVS_ProceduralWorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\obj\Debug\AVS_WorldGeneration.Properties.Resources.resources
+C:\Users\sen\Documents\Visual Studio 2017\Projects\AVS_ProceduralWorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\obj\Debug\AVS_WorldGeneration.csproj.GenerateResource.Cache
+C:\Users\sen\Documents\Visual Studio 2017\Projects\AVS_ProceduralWorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\obj\Debug\AVS_WorldGeneration.exe
+C:\Users\sen\Documents\Visual Studio 2017\Projects\AVS_ProceduralWorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\obj\Debug\AVS_WorldGeneration.pdb
+C:\Users\sen\Documents\Visual Studio 2017\Projects\AVS_ProceduralWorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\bin\Debug\FortuneVoronoi.dll
+C:\Users\sen\Documents\Visual Studio 2017\Projects\AVS_ProceduralWorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\obj\Debug\AVS_WorldGeneration_Content.g.cs

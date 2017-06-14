@@ -11,15 +11,20 @@
 
         </Viewport3D>
         <StackPanel DockPanel.Dock="Right" Height="600" Width="200">
-            <Label>World Generation</Label>
-            <Line Height="1" Width="180" Fill="Black"/>
-            <Label>Voronoi Generation Loop Count:</Label>
+            <Label FontWeight="Bold" FontSize="16">World Generation</Label>
+            <Separator Margin="0,10,0,0"/>
+            <Separator/>
+            <Label FontSize="14">Voronoi Generation</Label>
+            <Label>Loop Count:</Label>
             <TextBox x:Name="tbxVoronoiLoopCount"></TextBox>
-            <ProgressBar x:Name="pbGenerateVoronoi" Height="10"/>
+            <ProgressBar x:Name="pbGenerateVoronoi" Height="10" Margin="0,10,0,5"/>
             <Button x:Name="btnGenerateVoronoi" Click="BtnGenerateVoronoi_Click">Generate Voronoi</Button>
-            <ProgressBar x:Name="pbDrawVoronoi" Height="10"/>
+            <Separator Margin="0,10,0,0"/>
+            <Separator/>
+            <Label FontSize="14">Voronoi Drawing</Label>
+            <CheckBox x:Name="cbDrawWireframe" Content="Draw Wireframe"/>
+            <ProgressBar x:Name="pbDrawVoronoi" Height="10" Margin="0,10,0,5"/>
             <Button x:Name="btnDrawVoronoi" Click="BtnDrawVoronoi_Click" IsEnabled="False">Draw Voronoi</Button>
-            <StatusBar Height="100"/>
         </StackPanel>
     </DockPanel>
 </Window>

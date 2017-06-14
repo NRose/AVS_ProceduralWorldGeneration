@@ -41,8 +41,6 @@ namespace AVS_WorldGeneration
         private const double m_dCameraDPhi = 0.1;
         private const double m_dCameraDTheta = 0.1;
         private const double m_dCameraDR = 0.1;
-
-        private Dictionary<Point3D, int> m_dicPoints = new Dictionary<Point3D, int>();
         #endregion
 
         public MainWindow()
@@ -80,7 +78,7 @@ namespace AVS_WorldGeneration
             pbGenerateVoronoi.Dispatcher.Invoke(updatePB, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, dValue});
             for (int i = 0; i < dVoronoiCount; i++)
             {
-                m_dVector = new double[] { m_kRnd.NextDouble(), m_kRnd.NextDouble() };
+                m_dVector = new double[] { m_kRnd.NextDouble() * (1.0 - -1.0) + -1.0, m_kRnd.NextDouble() * (1.0 - -1.0) + -1.0 };
                 m_akVectors.Add(new BenTools.Mathematics.Vector(m_dVector));
                 dValue += dOneStep;
                 pbGenerateVoronoi.Dispatcher.Invoke(updatePB, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, dValue });
@@ -95,17 +93,40 @@ namespace AVS_WorldGeneration
         private void DrawVoronoi()
         {
             MeshGeometry3D kMesh = new MeshGeometry3D();
+            /*
+            m_kVoronoi.Vertizes.OrderBy(o => o[0]);
+            m_kVoronoi.Vertizes.OrderByDescending(o => o[1]);
 
             foreach (BenTools.Mathematics.Vector kVector in m_kVoronoi.Vertizes)
             {
-                Point3D p00 = new Point3D(kVector.data[0], 0.0, kVector.data[1]);
-                kMesh.TriangleIndices.Add(AddPoint(kMesh.Positions, p00));
+                Point3D p0 = new Point3D(kVector[0], kVector[1], 0.0f);
+                kMesh.TriangleIndices.Add(Helper.AddPoint(kMesh.Positions, p0));
             }
-
+            */
+            
+            foreach (VoronoiEdge kEdge in m_kVoronoi.Edges)
+            {
+                Point3D p0 = new Point3D(kEdge.LeftData[0], kEdge.LeftData[1], 0.0f);
+                Point3D p1 = new Point3D(kEdge.RightData[0], kEdge.RightData[1], 0.0f);
+                kMesh.TriangleIndices.Add(Helper.AddPoint(kMesh.Positions, p0));
+                kMesh.TriangleIndices.Add(Helper.AddPoint(kMesh.Positions, p1));
+            }
+            
             DiffuseMaterial kSurfaceMaterial = new DiffuseMaterial(Brushes.Orange);
             GeometryModel3D kSurfaceModel = new GeometryModel3D(kMesh, kSurfaceMaterial);
             kSurfaceModel.BackMaterial = kSurfaceMaterial;
             m_kMainModel3DGroup.Children.Add(kSurfaceModel);
+
+            if ((bool)cbDrawWireframe.IsChecked)
+            {
+                MeshGeometry3D kWireframe = kMesh.ToWireframe(0.005);
+                //DiffuseMaterial kWireframeMaterial = new DiffuseMaterial(Brushes.Red);
+                MaterialGroup kWireframeMaterial = new MaterialGroup();
+                kWireframeMaterial.Children.Add(new DiffuseMaterial(Brushes.Black));
+                kWireframeMaterial.Children.Add(new EmissiveMaterial(new SolidColorBrush(Color.FromRgb(200, 0, 0))));
+                GeometryModel3D kWireframeModel = new GeometryModel3D(kWireframe, kWireframeMaterial);
+                m_kMainModel3DGroup.Children.Add(kWireframeModel);
+            }
 
             ModelVisual3D kModelVisual = new ModelVisual3D();
             kModelVisual.Content = m_kMainModel3DGroup;
@@ -123,25 +144,6 @@ namespace AVS_WorldGeneration
         private void BtnDrawVoronoi_Click(object sender, RoutedEventArgs e)
         {
             DrawVoronoi();
-        }
-
-        private int AddPoint(Point3DCollection points, Point3D point)
-        {
-            /*
-            for(int i = 0; i < points.Count; i++)
-            {
-                if ((point.X == points[i].X) && (point.Y == points[i].Y) && (point.Z == points[i].Z))
-                    return i;
-            }
-            points.Add(point);
-            return points.Count - 1;
-            */
-            if (m_dicPoints.ContainsKey(point))
-                return m_dicPoints[point];
-
-            points.Add(point);
-            m_dicPoints.Add(point, points.Count - 1);
-            return points.Count - 1;
         }
 
         private void DefineLights()
@@ -172,8 +174,8 @@ namespace AVS_WorldGeneration
                     Point3D p01 = new Point3D(x, F(x, z + dZ), z + dZ);
                     Point3D p11 = new Point3D(x + dX, F(x + dX, z + dZ), z + dZ);
 
-                    AddTriangle(kMesh, p00, p01, p11);
-                    AddTriangle(kMesh, p00, p11, p10);
+                    Helper.AddTriangle(kMesh, p00, p01, p11);
+                    Helper.AddTriangle(kMesh, p00, p11, p10);
                 }
             }
 
@@ -193,35 +195,28 @@ namespace AVS_WorldGeneration
             return Math.Exp(-dR2) * Math.Sin(dTwoPI * dR) * Math.Cos(3 * dTheta);
         }
 
-        private void AddTriangle(MeshGeometry3D kMesh, Point3D kPoint1, Point3D kPoint2, Point3D kPoint3)
-        {
-            int nIndex1 = AddPoint(kMesh.Positions, kPoint1);
-            int nIndex2 = AddPoint(kMesh.Positions, kPoint2);
-            int nIndex3 = AddPoint(kMesh.Positions, kPoint3);
-
-            kMesh.TriangleIndices.Add(nIndex1);
-            kMesh.TriangleIndices.Add(nIndex2);
-            kMesh.TriangleIndices.Add(nIndex3);
-        }
-
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
             switch (e.Key)
             {
                 case Key.Up:
+                case Key.W:
                     m_dCameraPhi += m_dCameraDPhi;
                     if (m_dCameraPhi > Math.PI / 2.0)
                         m_dCameraPhi = Math.PI / 2.0;
                     break;
                 case Key.Down:
+                case Key.S:
                     m_dCameraPhi -= m_dCameraDPhi;
                     if (m_dCameraPhi < -Math.PI / 2.0)
                         m_dCameraPhi = -Math.PI / 2.0;
                     break;
                 case Key.Left:
+                case Key.A:
                     m_dCameraTheta += m_dCameraDTheta;
                     break;
                 case Key.Right:
+                case Key.D:
                     m_dCameraTheta -= m_dCameraDTheta;
                     break;
                 case Key.Add:
