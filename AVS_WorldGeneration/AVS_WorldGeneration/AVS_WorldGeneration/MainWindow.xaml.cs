@@ -95,11 +95,13 @@ namespace AVS_WorldGeneration
             }
             double dOneStep = 100.0 / (dVoronoiCount + (dVoronoiCount * 0.33f));
             double dValue = 0.0;
+            m_akVectors = new List<BenTools.Mathematics.Vector>();
             pbGenerateVoronoi.Dispatcher.Invoke(updatePB, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, dValue});
-            m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMinimum, dMinimum }));
+            /*m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMinimum, dMinimum }));
             m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMinimum, dMaximum }));
             m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMaximum, dMinimum }));
-            m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMaximum, dMaximum }));
+            m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMaximum, dMaximum }));*/
+            Log("Start process: Randomizing Vectors", LogLevel.INFO);
             for (int i = 0; i < dVoronoiCount; i++)
             {
                 m_dVector = new double[] { m_kRnd.NextDouble() * (dMaximum - dMinimum) + dMinimum, m_kRnd.NextDouble() * (dMaximum - dMinimum) + dMinimum };
@@ -107,20 +109,23 @@ namespace AVS_WorldGeneration
                 dValue += dOneStep;
                 pbGenerateVoronoi.Dispatcher.Invoke(updatePB, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, dValue });
             }
-
+            Log("End process: Randomizing Vectors", LogLevel.INFO);
+            //m_akVectors = m_akVectors.OrderBy(o => o[0]).ThenBy(o => o[1]).ToList();
             m_kVoronoi = Fortune.ComputeVoronoiGraph(m_akVectors);
             pbGenerateVoronoi.Dispatcher.Invoke(updatePB, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, 100.0 });
             btnDrawVoronoi.IsEnabled = true;
             vpOutputView.Focus();
+            Log("End process: Generate Voronoi", LogLevel.INFO);
         }
 
         private void DrawVoronoi()
         {
+            Log("Start process: Draw Voronoi", LogLevel.INFO);
             MeshGeometry3D kMesh = new MeshGeometry3D();
-            m_kVoronoi.Vertizes.OrderBy(o => o[0]);
-            m_kVoronoi.Vertizes.OrderByDescending(o => o[1]);
 
             /*
+            m_kVoronoi.Vertizes.OrderBy(o => o[0]);
+            m_kVoronoi.Vertizes.OrderByDescending(o => o[1]);
             foreach (BenTools.Mathematics.Vector kVector in m_kVoronoi.Vertizes)
             {
                 Point3D p0 = new Point3D(kVector[0], kVector[1], 0.0f);
@@ -138,20 +143,32 @@ namespace AVS_WorldGeneration
             {
                 akEdges.Add(kEdge);
             }
-
-            for(int i = 0; i < akEdges.Count-1; i++)
+           
+            Log("Start process: Draw Edges", LogLevel.INFO);
+            for (int i = 0; i < akEdges.Count; i++)
             {
-                Point3D p0 = new Point3D(akEdges[i].LeftData[0], akEdges[i].LeftData[1], 0.0);
-                Point3D p1 = new Point3D(akEdges[i].RightData[0], akEdges[i].RightData[1], 0.0);
+                if (akEdges[i].VVertexA == Fortune.VVUnkown || akEdges[i].VVertexA == Fortune.VVInfinite)
+                {
+                    Log("VVertexA unknown or infinite", LogLevel.ERROR);
+                }
+                Point3D p0 = new Point3D(akEdges[i].VVertexA[0], akEdges[i].VVertexA[1], 0.0);
 
-                //Point3D p2 = new Point3D(akEdges[i+1].LeftData[0], akEdges[i+1].LeftData[1], 0.0);
-                Point3D p3 = new Point3D(akEdges[i+1].RightData[0], akEdges[i+1].RightData[1], 0.0);
+                if (akEdges[i].VVertexB == Fortune.VVUnkown || akEdges[i].VVertexB == Fortune.VVInfinite)
+                {
+                    Log("VVertexB unknown or infinite", LogLevel.ERROR);
+                }
+                Point3D p1 = new Point3D(akEdges[i].VVertexB[0], akEdges[i].VVertexB[1], 0.0);
 
-                //Point3D p4 = new Point3D(akEdges[i+2].LeftData[0], akEdges[i+2].LeftData[1], 0.0);
-                //Point3D p5 = new Point3D(akEdges[i+2].RightData[0], akEdges[i+2].RightData[1], 0.0);
-                Helper.AddTriangle(kMesh, p0, p1, p3);
+                if (akEdges[i].FixedPoint == Fortune.VVUnkown || akEdges[i].FixedPoint == Fortune.VVInfinite)
+                {
+                    Log("FixedPoint unknown or infinite", LogLevel.ERROR);
+                }
+                Point3D p2 = new Point3D(akEdges[i].FixedPoint[0], akEdges[i].FixedPoint[1], 0.0);
+
+                Helper.AddTriangle(kMesh, p0, p1, p2);
             }
-            
+            Log("End process: Draw Edges", LogLevel.INFO);
+
             DiffuseMaterial kSurfaceMaterial = new DiffuseMaterial(Brushes.Orange);
             GeometryModel3D kSurfaceModel = new GeometryModel3D(kMesh, kSurfaceMaterial);
             kSurfaceModel.BackMaterial = kSurfaceMaterial;
@@ -159,6 +176,7 @@ namespace AVS_WorldGeneration
 
             if ((bool)cbDrawWireframe.IsChecked)
             {
+                Log("Start process: Draw Wireframe", LogLevel.INFO);
                 MeshGeometry3D kWireframe = kMesh.ToWireframe(0.005);
                 //DiffuseMaterial kWireframeMaterial = new DiffuseMaterial(Brushes.Red);
                 MaterialGroup kWireframeMaterial = new MaterialGroup();
@@ -166,6 +184,7 @@ namespace AVS_WorldGeneration
                 kWireframeMaterial.Children.Add(new EmissiveMaterial(new SolidColorBrush(Color.FromRgb(200, 0, 0))));
                 GeometryModel3D kWireframeModel = new GeometryModel3D(kWireframe, kWireframeMaterial);
                 m_kMainModel3DGroup.Children.Add(kWireframeModel);
+                Log("End process: Draw Wireframe", LogLevel.INFO);
             }
 
             ModelVisual3D kModelVisual = new ModelVisual3D();
@@ -174,6 +193,7 @@ namespace AVS_WorldGeneration
             vpOutputView.Children.Clear();
             GC.Collect();
             vpOutputView.Children.Add(kModelVisual);
+            Log("End process: Draw Voronoi", LogLevel.INFO);
         }
 
         private void BtnGenerateVoronoi_Click(object sender, RoutedEventArgs e)
@@ -289,7 +309,10 @@ namespace AVS_WorldGeneration
 
         public void Log(string sLogMessage, LogLevel eLogLevel)
         {
+            List<LogItem> akTempLogs = Helper.akLogger;
+            Helper.akLogger = new List<LogItem>();
             Helper.akLogger.Add(new LogItem(sLogMessage, eLogLevel));
+            Helper.akLogger.AddRange(akTempLogs);
 
             lbxLog.ItemsSource = null;
             lbxLog.Items.Clear();

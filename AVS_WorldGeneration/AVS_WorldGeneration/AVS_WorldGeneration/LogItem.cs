@@ -48,27 +48,27 @@ namespace AVS_WorldGeneration
                     m_kLogColor = Brushes.Gray;
                     break;
                 case LogLevel.DEBUG:
-                    m_sLogMessage = "[DEBUG]\t\t" + sLogMessage + " [" + DateTime.Now + "]";
+                    m_sLogMessage = "[DEBUG]\t[" + DateTime.Now + "]\t" + sLogMessage;
                     m_kLogColor = Brushes.Black;
                     break;
                 case LogLevel.INFO:
-                    m_sLogMessage = "[INFO]\t\t### " + sLogMessage + " ### [" + DateTime.Now + "]";
+                    m_sLogMessage = "[INFO]\t[" + DateTime.Now + "]\t### " + sLogMessage + " ###";
                     m_kLogColor = Brushes.Green;
                     break;
                 case LogLevel.WARN:
-                    m_sLogMessage = "[WARN]\t\t>> " + sLogMessage + " << [" + DateTime.Now + "]";
+                    m_sLogMessage = "[WARN]\t[" + DateTime.Now + "]\t>> " + sLogMessage + " <<";
                     m_kLogColor = Brushes.Orange;
                     break;
                 case LogLevel.ERROR:
-                    m_sLogMessage = "[ERROR]\t\t>> " + sLogMessage + " << [" + DateTime.Now + "]";
+                    m_sLogMessage = "[ERROR]\t[" + DateTime.Now + "]\t>> " + sLogMessage + " <<";
                     m_kLogColor = Brushes.OrangeRed;
                     break;
                 case LogLevel.CRITICAL:
-                    m_sLogMessage = "[CRITICAL]\t\t>> " + sLogMessage + " << [" + DateTime.Now + "]";
+                    m_sLogMessage = "[CRITICAL]\t[" + DateTime.Now + "]\t>> " + sLogMessage + " <<";
                     m_kLogColor = Brushes.Red;
                     break;
                 case LogLevel.FATAL:
-                    m_sLogMessage = "[FATAL]\t\t>> " + sLogMessage + " << [" + DateTime.Now + "]";
+                    m_sLogMessage = "[FATAL]\t[" + DateTime.Now + "]\t>> " + sLogMessage + " <<";
                     m_kLogColor = Brushes.DarkRed;
                     break;
                 default:
