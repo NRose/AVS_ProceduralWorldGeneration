@@ -335,11 +335,78 @@ namespace AVS_WorldGeneration
             Helper.akLogger = new List<LogItem>();
             Helper.akLogger.Add(new LogItem(sLogMessage, eLogLevel));
             Helper.akLogger.AddRange(akTempLogs);
+            UpdateLogPreview();
+        }
 
+        private void UpdateLogPreview(object sender, RoutedEventArgs e)
+        {
+            UpdateLogPreview();
+        }
+
+        public void UpdateLogPreview()
+        {
+            if(lbxLog == null)
+            {
+                return;
+            }
+
+            List<LogItem> akTempLogs = new List<LogItem>();
+
+            for(int i = 0; i < Helper.akLogger.Count; i++)
+            {
+                switch (Helper.akLogger[i].eLogLevel)
+                {
+                    case LogLevel.NONE:
+                        if ((bool)cbLogNone.IsChecked)
+                            akTempLogs.Add(Helper.akLogger[i]);
+                        else if (Helper.akLogger[i].sLogMessage == "[NONE]\t\t--- ::CLEAR::LOG::PREVIEW:: ---")
+                        {
+                            lbxLog.ItemsSource = null;
+                            lbxLog.Items.Clear();
+
+                            lbxLog.ItemsSource = akTempLogs;
+                            return;
+                        }
+                        break;
+                    case LogLevel.DEBUG:
+                        if ((bool)cbLogDebug.IsChecked)
+                            akTempLogs.Add(Helper.akLogger[i]);
+                        break;
+                    case LogLevel.INFO:
+                        if ((bool)cbLogInfo.IsChecked)
+                            akTempLogs.Add(Helper.akLogger[i]);
+                        break;
+                    case LogLevel.WARN:
+                        if ((bool)cbLogWarn.IsChecked)
+                            akTempLogs.Add(Helper.akLogger[i]);
+                        break;
+                    case LogLevel.ERROR:
+                        if ((bool)cbLogError.IsChecked)
+                            akTempLogs.Add(Helper.akLogger[i]);
+                        break;
+                    case LogLevel.CRITICAL:
+                        if ((bool)cbLogCritical.IsChecked)
+                            akTempLogs.Add(Helper.akLogger[i]);
+                        break;
+                    case LogLevel.FATAL:
+                        if ((bool)cbLogFatal.IsChecked)
+                            akTempLogs.Add(Helper.akLogger[i]);
+                        break;
+                    default:
+                        break;
+                }
+            }
             lbxLog.ItemsSource = null;
             lbxLog.Items.Clear();
 
-            lbxLog.ItemsSource = Helper.akLogger;
+            lbxLog.ItemsSource = akTempLogs;
+        }
+
+        private void ClearLogPreview(object sender, RoutedEventArgs e)
+        {
+            Logging systemLog = this.Log;
+            Dispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "::CLEAR::LOG::PREVIEW::", LogLevel.NONE });
+            UpdateLogPreview();
         }
     }
 }
