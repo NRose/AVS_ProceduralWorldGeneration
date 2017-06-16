@@ -28,6 +28,7 @@
             <Separator/>
             <Label FontSize="14">Voronoi Drawing</Label>
             <CheckBox x:Name="cbDrawWireframe" Content="Draw Wireframe"/>
+            <CheckBox x:Name="cbClearEdges" Content="Clear Edges"/>
             <ProgressBar x:Name="pbDrawVoronoi" Height="10" Margin="0,10,0,5"/>
             <Button x:Name="btnDrawVoronoi" Click="BtnDrawVoronoi_Click" IsEnabled="False">Draw Voronoi</Button>
             <Separator Margin="0,10,0,0"/>
