@@ -142,6 +142,5 @@ namespace AVS_WorldGeneration
             m_dicPoints.Add(point, points.Count - 1);
             return points.Count - 1;
         }
-
     }
 }
