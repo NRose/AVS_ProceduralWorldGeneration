@@ -105,6 +105,9 @@ namespace AVS_WorldGeneration
             m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMaximum, dMinimum }));
             m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMaximum, dMaximum }));*/
             Dispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Start process: Randomizing Vectors", LogLevel.INFO });
+            
+            // Berechnung des Voronoigraphens - Punkt zur Verteilung
+            // TODO: Verteilen
             for (int i = 0; i < dVoronoiCount; i++)
             {
                 m_dVector = new double[] { m_kRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum, m_kRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum };
@@ -150,6 +153,10 @@ namespace AVS_WorldGeneration
             }
 
             Dispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Start process: Draw Edges", LogLevel.INFO });
+
+            // Zeichnen des Voronoigraphens - Punkt zur Verteilung
+            // TODO: Verteilen
+            // TODO: foreach-Schleife in diese for-Schleife integrieren
             for (int i = 0; i < akEdges.Count; i++)
             {
                 if (akEdges[i].VVertexA == Fortune.VVUnkown || akEdges[i].VVertexA == Fortune.VVInfinite)
