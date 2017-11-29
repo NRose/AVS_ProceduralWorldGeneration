@@ -146,55 +146,50 @@ namespace AVS_WorldGeneration
             }
             */
             List<VoronoiEdge> akEdges = new List<VoronoiEdge>();
-            
-            foreach (VoronoiEdge kEdge in m_kVoronoi.Edges)
-            {
-                akEdges.Add(kEdge);
-            }
 
             Dispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Start process: Draw Edges", LogLevel.INFO });
 
             // Zeichnen des Voronoigraphens - Punkt zur Verteilung
             // TODO: Verteilen
-            // TODO: foreach-Schleife in diese for-Schleife integrieren
-            for (int i = 0; i < akEdges.Count; i++)
+            for (int i = 0; i < m_kVoronoi.Edges.Count; i++)
             {
-                if (akEdges[i].VVertexA == Fortune.VVUnkown || akEdges[i].VVertexA == Fortune.VVInfinite)
-                {
-                    Dispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "VVertexA unknown or infinite", LogLevel.ERROR });
-                    continue;
-                }
-                Point3D p0 = new Point3D(akEdges[i].VVertexA[0], akEdges[i].VVertexA[1], 0.0);
+               akEdges.Add(m_kVoronoi.Edges.ElementAt(i));
+               if (akEdges[i].VVertexA == Fortune.VVUnkown || akEdges[i].VVertexA == Fortune.VVInfinite)
+               {
+                  Dispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "VVertexA unknown or infinite", LogLevel.ERROR });
+                  continue;
+               }
+               Point3D p0 = new Point3D(akEdges[i].VVertexA[0], akEdges[i].VVertexA[1], 0.0);
 
-                if (akEdges[i].VVertexB == Fortune.VVUnkown || akEdges[i].VVertexB == Fortune.VVInfinite)
-                {
-                    Dispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "VVertexB unknown or infinite", LogLevel.ERROR });
-                    continue;
-                }
-                Point3D p1 = new Point3D(akEdges[i].VVertexB[0], akEdges[i].VVertexB[1], 0.0);
+               if (akEdges[i].VVertexB == Fortune.VVUnkown || akEdges[i].VVertexB == Fortune.VVInfinite)
+               {
+                  Dispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "VVertexB unknown or infinite", LogLevel.ERROR });
+                  continue;
+               }
+               Point3D p1 = new Point3D(akEdges[i].VVertexB[0], akEdges[i].VVertexB[1], 0.0);
 
-                if (akEdges[i].FixedPoint == Fortune.VVUnkown || akEdges[i].FixedPoint == Fortune.VVInfinite)
-                {
-                    Dispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "FixedPoint unknown or infinite", LogLevel.ERROR });
-                    continue;
-                }
+               if (akEdges[i].FixedPoint == Fortune.VVUnkown || akEdges[i].FixedPoint == Fortune.VVInfinite)
+               {
+                  Dispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "FixedPoint unknown or infinite", LogLevel.ERROR });
+                  continue;
+               }
 
-                if ((bool)cbClearEdges.IsChecked)
-                {
-                    if (akEdges[i].VVertexA[0] > m_dMaximum || akEdges[i].VVertexA[0] < m_dMinimum ||
-                   akEdges[i].VVertexA[1] > m_dMaximum || akEdges[i].VVertexA[1] < m_dMinimum ||
-                   akEdges[i].VVertexB[0] > m_dMaximum || akEdges[i].VVertexB[0] < m_dMinimum ||
-                   akEdges[i].VVertexB[1] > m_dMaximum || akEdges[i].VVertexB[1] < m_dMinimum ||
-                   akEdges[i].FixedPoint[0] > m_dMaximum || akEdges[i].FixedPoint[0] < m_dMinimum ||
-                   akEdges[i].FixedPoint[1] > m_dMaximum || akEdges[i].FixedPoint[1] < m_dMinimum)
-                    {
-                        Dispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Some Vertex out of range", LogLevel.DEBUG });
-                        continue;
-                    }
-                }
-                Point3D p2 = new Point3D(akEdges[i].FixedPoint[0], akEdges[i].FixedPoint[1], 0.0);
+               if ((bool)cbClearEdges.IsChecked)
+               {
+                  if (akEdges[i].VVertexA[0] > m_dMaximum || akEdges[i].VVertexA[0] < m_dMinimum ||
+                 akEdges[i].VVertexA[1] > m_dMaximum || akEdges[i].VVertexA[1] < m_dMinimum ||
+                 akEdges[i].VVertexB[0] > m_dMaximum || akEdges[i].VVertexB[0] < m_dMinimum ||
+                 akEdges[i].VVertexB[1] > m_dMaximum || akEdges[i].VVertexB[1] < m_dMinimum ||
+                 akEdges[i].FixedPoint[0] > m_dMaximum || akEdges[i].FixedPoint[0] < m_dMinimum ||
+                 akEdges[i].FixedPoint[1] > m_dMaximum || akEdges[i].FixedPoint[1] < m_dMinimum)
+                  {
+                     Dispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Some Vertex out of range", LogLevel.DEBUG });
+                     continue;
+                  }
+               }
+               Point3D p2 = new Point3D(akEdges[i].FixedPoint[0], akEdges[i].FixedPoint[1], 0.0);
 
-                Helper.AddTriangle(kMesh, p0, p1, p2);
+               Helper.AddTriangle(kMesh, p0, p1, p2);
             }
             Dispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "End process: Draw Edges", LogLevel.INFO });
 
