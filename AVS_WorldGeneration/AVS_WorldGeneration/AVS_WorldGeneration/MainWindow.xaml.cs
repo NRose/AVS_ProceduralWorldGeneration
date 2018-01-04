@@ -16,7 +16,9 @@ using BenTools.Mathematics;
 using System.Threading;
 using System.Windows.Media.Media3D;
 using System.Windows.Threading;
+using System.Management;
 using Fluent;
+using System.IO;
 
 namespace AVS_WorldGeneration
 {
@@ -27,6 +29,11 @@ namespace AVS_WorldGeneration
     {
         private const double m_dMinimum = -1.0;
         private const double m_dMaximum = 1.0;
+
+        private int m_nPhysicalProcessors = 0;
+        private int m_nCores = 0;
+        private int m_nLogicalProcessors = 0;
+        private int m_nThreadsInUse = 1;
 
         #region Voronoi Stuff
         private List<BenTools.Mathematics.Vector> m_akVectors = new List<BenTools.Mathematics.Vector>();
@@ -71,6 +78,19 @@ namespace AVS_WorldGeneration
 
             vpOutputView.Children.Add(kModelVisual);*/
 
+            foreach (var item in new System.Management.ManagementObjectSearcher("Select * from Win32_ComputerSystem").Get())
+            {
+                m_nPhysicalProcessors = int.Parse(item["NumberOfProcessors"].ToString());
+            }
+            foreach (var item in new System.Management.ManagementObjectSearcher("Select * from Win32_Processor").Get())
+            {
+                m_nCores += int.Parse(item["NumberOfCores"].ToString());
+            }
+            foreach (var item in new System.Management.ManagementObjectSearcher("Select * from Win32_ComputerSystem").Get())
+            {
+                m_nLogicalProcessors = int.Parse(item["NumberOfLogicalProcessors"].ToString());
+            }
+            tllbSystemInfo.Content = "Number of physical processors:\t" + m_nPhysicalProcessors.ToString() + "\nNumber of cores:\t\t\t" + m_nCores.ToString() + "\nNumber of logical processors:\t" + m_nLogicalProcessors.ToString() + "\nNumber of threads in use:\t\t" + m_nThreadsInUse.ToString();
         }
 
         delegate void VoronoiProgress(DependencyProperty dp, Object value);
@@ -118,13 +138,17 @@ namespace AVS_WorldGeneration
             //m_akVectors = m_akVectors.OrderBy(o => o[0]).ThenBy(o => o[1]).ToList();
             m_kVoronoi = Fortune.ComputeVoronoiGraph(m_akVectors);
             pbGenerateVoronoi.Dispatcher.Invoke(updatePB, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, 100.0 });
-            btnDrawVoronoi.IsEnabled = true;
+            if (!btnClearVoronoi.IsEnabled)
+            {
+                btnDrawVoronoi.IsEnabled = true;
+            }
             vpOutputView.Focus();
             Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "End process: Generate Voronoi", LogLevel.INFO });
         }
 
         private void DrawVoronoi()
         {
+            btnDrawVoronoi.IsEnabled = false;
             Logging systemLog = this.Log;
 
             Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Start process: Draw Voronoi", LogLevel.INFO });
@@ -218,6 +242,23 @@ namespace AVS_WorldGeneration
             GC.Collect();
             vpOutputView.Children.Add(kModelVisual);
             Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "End process: Draw Voronoi", LogLevel.INFO });
+            btnClearVoronoi.IsEnabled = true;
+        }
+
+        private void ClearVoronoi()
+        {
+            btnClearVoronoi.IsEnabled = false;
+            Logging systemLog = this.Log;
+
+            Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Start process: Clear Voronoi", LogLevel.INFO });
+
+            m_kMainModel3DGroup = new Model3DGroup();
+            vpOutputView.Children.Clear();
+            GC.Collect();
+            DefineLights();
+
+            Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "End process: Clear Voronoi", LogLevel.INFO });
+            btnDrawVoronoi.IsEnabled = true;
         }
 
         private void BtnGenerateVoronoi_Click(object sender, RoutedEventArgs e)
@@ -228,6 +269,11 @@ namespace AVS_WorldGeneration
         private void BtnDrawVoronoi_Click(object sender, RoutedEventArgs e)
         {
             DrawVoronoi();
+        }
+
+        private void BtnClearVoronoi_Click(object sender, RoutedEventArgs e)
+        {
+            ClearVoronoi();
         }
 
         private void DefineLights()
@@ -347,7 +393,7 @@ namespace AVS_WorldGeneration
 
         public void UpdateLogPreview()
         {
-            if(lbxLog == null)
+            if(lbxLog == null || sbiLastLog == null)
             {
                 return;
             }
@@ -402,6 +448,7 @@ namespace AVS_WorldGeneration
             lbxLog.Items.Clear();
 
             lbxLog.ItemsSource = akTempLogs;
+            sbiLastLog.Value = "Last log message:     " + akTempLogs[0].sLogMessage + "     ";
         }
 
         private void ClearLogPreview(object sender, RoutedEventArgs e)
@@ -409,6 +456,22 @@ namespace AVS_WorldGeneration
             Logging systemLog = this.Log;
             Dispatcher.CurrentDispatcher.Invoke(systemLog, DispatcherPriority.Background, args: new object[] { "::CLEAR::LOG::PREVIEW::", LogLevel.NONE });
             UpdateLogPreview();
+        }
+
+        private void btnExportLog_Click(object sender, RoutedEventArgs e)
+        {
+            string sLogFileName = "LogFile_" + DateTime.Now.ToShortDateString().Replace(".", "-") + "_" + DateTime.Now.ToLongTimeString().Replace(":", "-") + ".txt";
+            StreamWriter cSW = new StreamWriter(sLogFileName);
+
+            foreach(LogItem cItem in lbxLog.ItemsSource)
+            {
+                cSW.WriteLine(cItem.sLogMessage);
+            }
+
+            cSW.Close();
+            lbxLog.ItemsSource = null;
+            lbxLog.Items.Clear();
+            sbiLastLog.Value = sLogFileName + " successfully saved!     ";
         }
     }
 }

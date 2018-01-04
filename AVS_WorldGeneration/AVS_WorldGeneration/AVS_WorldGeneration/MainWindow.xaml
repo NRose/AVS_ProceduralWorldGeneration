@@ -6,52 +6,141 @@
         xmlns:Fluent="urn:fluent-ribbon"
         xmlns:local="clr-namespace:AVS_WorldGeneration"
         mc:Ignorable="d"
-        Title="MainWindow" Height="635" Width="1415" KeyDown="Window_KeyDown">
+        Title="MainWindow" Height="635" Width="1415" KeyDown="Window_KeyDown" Icon="./Resources/Distribute.png">
     <DockPanel>
-        <Viewport3D x:Name="vpOutputView" DockPanel.Dock="Left" Height="600" Width="800">
+        <Fluent:Ribbon DockPanel.Dock="Top" QuickAccessToolBarHeight="0">
+            <!--Backstage-->
+            <Fluent:Ribbon.Menu>
+                <Fluent:Backstage>
+                    <Fluent:BackstageTabControl>
+                        <Fluent:BackstageTabItem Header="Home">
+                            <Fluent:TwoLineLabel>
+                                Welcome to our distributed procedural voronoi generation!
+                            </Fluent:TwoLineLabel>
+                        </Fluent:BackstageTabItem>
+                        <Fluent:BackstageTabItem Header="Settings" />
+                        <Fluent:BackstageTabItem Header="Credits">
+                            <Fluent:TwoLineLabel>
+                                University of Applied Science Cologne
+                                Architecture of distributed Systems
+                                Guided by Prof. Dr. Köhler
+                                Project Participants
+                                Anna Ottersbach
+                                Niklase Rose
+                                Philipp Janzen
+                                Sebastian Engfer
+                            </Fluent:TwoLineLabel>
+                        </Fluent:BackstageTabItem>
+                        <Fluent:SeparatorTabItem />
+                        <Fluent:Button Header="Exit" />
+                    </Fluent:BackstageTabControl>
+                </Fluent:Backstage>
+            </Fluent:Ribbon.Menu>
 
-        </Viewport3D>
-        <StackPanel DockPanel.Dock="Right" Width="590" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="-5,0,5,0">
-            <Label FontWeight="Bold" FontSize="16">World Generation</Label>
-            <Separator Margin="0,10,0,0"/>
-            <Separator/>
-            <Label FontSize="14">General Settings</Label>
-            <Label>Seed:</Label>
-            <TextBox x:Name="tbxSeed"></TextBox>
-            <Separator Margin="0,10,0,0"/>
-            <Separator/>
-            <Label FontSize="14">Voronoi Generation</Label>
-            <Label>Loop Count:</Label>
-            <TextBox x:Name="tbxVoronoiLoopCount"></TextBox>
-            <ProgressBar x:Name="pbGenerateVoronoi" Height="10" Margin="0,10,0,5"/>
-            <Button x:Name="btnGenerateVoronoi" Click="BtnGenerateVoronoi_Click">Generate Voronoi</Button>
-            <Separator Margin="0,10,0,0"/>
-            <Separator/>
-            <Label FontSize="14">Voronoi Drawing</Label>
-            <CheckBox x:Name="cbDrawWireframe" Content="Draw Wireframe"/>
-            <CheckBox x:Name="cbClearEdges" Content="Clear Edges"/>
-            <ProgressBar x:Name="pbDrawVoronoi" Height="10" Margin="0,10,0,5"/>
-            <Button x:Name="btnDrawVoronoi" Click="BtnDrawVoronoi_Click" IsEnabled="False">Draw Voronoi</Button>
-            <Separator Margin="0,10,0,0"/>
-            <Separator/>
-            <StackPanel Orientation="Horizontal">
-                <Label FontSize="14">Log</Label>
-                <CheckBox x:Name="cbLogNone" Content="None  " VerticalContentAlignment="Center" Unchecked="UpdateLogPreview" Checked="UpdateLogPreview"/>
-                <CheckBox x:Name="cbLogDebug" Content="Debug  " VerticalContentAlignment="Center" IsChecked="True" Unchecked="UpdateLogPreview" Checked="UpdateLogPreview"/>
-                <CheckBox x:Name="cbLogInfo" Content="Info  " VerticalContentAlignment="Center" IsChecked="True" Unchecked="UpdateLogPreview" Checked="UpdateLogPreview"/>
-                <CheckBox x:Name="cbLogWarn" Content="Warn  " VerticalContentAlignment="Center" IsChecked="True" Unchecked="UpdateLogPreview" Checked="UpdateLogPreview"/>
-                <CheckBox x:Name="cbLogError" Content="Error  " VerticalContentAlignment="Center" IsChecked="True" Unchecked="UpdateLogPreview" Checked="UpdateLogPreview"/>
-                <CheckBox x:Name="cbLogCritical" Content="Critical  " VerticalContentAlignment="Center" IsChecked="True" Unchecked="UpdateLogPreview" Checked="UpdateLogPreview"/>
-                <CheckBox x:Name="cbLogFatal" Content="Fatal  " VerticalContentAlignment="Center" IsChecked="True" Unchecked="UpdateLogPreview" Checked="UpdateLogPreview"/>
-                <Button Content="Clear Log" Width="75" Height="20" Click="ClearLogPreview"/>
-            </StackPanel>
-            <ListBox x:Name="lbxLog" VerticalContentAlignment="Top" Height="196" Width="590" VerticalAlignment="Bottom" HorizontalAlignment="Right">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding sLogMessage}" Foreground="{Binding kLogColor}" />
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-        </StackPanel>
+            <Fluent:RibbonTabItem Header="World Generation">
+                <Fluent:RibbonGroupBox Header="General Settings">
+                    <Fluent:TextBox Name="tbxSeed" MinWidth="200" Header="Seed:" VerticalAlignment="Center" VerticalContentAlignment="Center" Margin="0,20,0,0" />
+                </Fluent:RibbonGroupBox>
+                <Fluent:RibbonGroupBox Header="Voronoi Generation">
+                    <Fluent:TextBox Name="tbxVoronoiLoopCount" MinWidth="200" Header="Loop Count:" VerticalAlignment="Center" VerticalContentAlignment="Center" Margin="0,20,5,0" />
+                    <ProgressBar x:Name="pbGenerateVoronoi" Height="10" Margin="0,10,5,0" Foreground="#FFAF0A2D"/>
+                    <Fluent:Button Name="btnGenerateVoronoi" 
+                           Header="Generate Voronoi"
+                           Icon="./Resources/Gear.png"
+                           LargeIcon="./Resources/Gear.png"
+                           Click="BtnGenerateVoronoi_Click"
+                           Width="80"/>
+                    <!--<Button x:Name="btnGenerateVoronoi" Click="BtnGenerateVoronoi_Click">Generate Voronoi</Button>-->
+                </Fluent:RibbonGroupBox>
+                <Fluent:RibbonGroupBox Header="Voronoi Drawing">
+                    <Fluent:CheckBox Name="cbDrawWireframe" Header="Draw Wireframe" Margin="0,6,5,0" />
+                    <Fluent:CheckBox Name="cbClearEdges" Header="Clear Edges" Margin="0,6,5,0" />
+                    <ProgressBar x:Name="pbDrawVoronoi" Height="10" Margin="0,10,5,0"/>
+                    <Fluent:Button Name="btnDrawVoronoi" 
+                           Header="Draw Voronoi"
+                           Icon="./Resources/Brush.png"
+                           LargeIcon="./Resources/Brush.png"
+                           Click="BtnDrawVoronoi_Click"
+                           IsEnabled="False"
+                           Width="80"/>
+                    <Fluent:Button Name="btnClearVoronoi" 
+                           Header="Clear Voronoi"
+                           Icon="./Resources/Erasor.png"
+                           LargeIcon="./Resources/Erasor.png"
+                           Click="BtnClearVoronoi_Click"
+                           IsEnabled="False"
+                           Width="80"/>
+                    <!--<Button x:Name="btnDrawVoronoi" Click="BtnDrawVoronoi_Click" IsEnabled="False">Draw Voronoi</Button>-->
+                </Fluent:RibbonGroupBox>
+            </Fluent:RibbonTabItem>
+
+            <Fluent:RibbonTabItem Header="Distribution">
+                <Fluent:RibbonGroupBox Header="Multi-Threading Distribution">
+                    <Label x:Name="tllbSystemInfo" Foreground="#FFB9B9B9" Margin="0,0,10,0" />
+                    <Fluent:TextBox Name="tbxThreadCount" MinWidth="115" Header="Thread Count:" VerticalAlignment="Center" VerticalContentAlignment="Center" Margin="0,20,5,0" />
+                    <Fluent:Button Name="btnUseThreads" 
+                           Header="Use Threads"
+                           Icon="./Resources/Cores.png"
+                           LargeIcon="./Resources/Cores.png"
+                           Width="80"/>
+                </Fluent:RibbonGroupBox>
+                <Fluent:RibbonGroupBox Header="Network Distribution">
+                    <Fluent:Button Name="btnSearchForNodes" 
+                           Header="Search for nodes"
+                           Icon="./Resources/Search.png"
+                           LargeIcon="./Resources/Search.png"
+                           Width="80"/>
+                    <Fluent:Button Name="btnConntectToNodes" 
+                           Header="Create network"
+                           Icon="./Resources/Distribute.png"
+                           LargeIcon="./Resources/Distribute.png"
+                           IsEnabled="False"
+                           Width="80"/>
+                    <ListBox x:Name="lbxNodes" Height="70" Width="500" SelectionMode="Multiple">
+                    </ListBox>
+                </Fluent:RibbonGroupBox>
+            </Fluent:RibbonTabItem>
+
+            <Fluent:RibbonTabItem Header="Log System">
+                <Fluent:RibbonGroupBox Header="Log Settings">
+                    <Fluent:CheckBox Name="cbLogNone" Header="None" Margin="0,6,5,0" Unchecked="UpdateLogPreview" Checked="UpdateLogPreview"/>
+                    <Fluent:CheckBox Name="cbLogDebug" Header="Debug" Margin="0,6,5,0" IsChecked="True" Unchecked="UpdateLogPreview" Checked="UpdateLogPreview"/>
+                    <Fluent:CheckBox Name="cbLogInfo" Header="Info" Margin="0,6,5,0" IsChecked="True" Unchecked="UpdateLogPreview" Checked="UpdateLogPreview"/>
+                    <Fluent:CheckBox Name="cbLogWarn" Header="Warn" Margin="0,6,5,0" IsChecked="True" Unchecked="UpdateLogPreview" Checked="UpdateLogPreview"/>
+                    <Fluent:CheckBox Name="cbLogError" Header="Error" Margin="0,6,5,0" IsChecked="True" Unchecked="UpdateLogPreview" Checked="UpdateLogPreview"/>
+                    <Fluent:CheckBox Name="cbLogCritical" Header="Critical" Margin="0,6,5,0" IsChecked="True" Unchecked="UpdateLogPreview" Checked="UpdateLogPreview"/>
+                    <Fluent:CheckBox Name="cbLogFatal" Header="Fatal" Margin="0,6,5,0" IsChecked="True" Unchecked="UpdateLogPreview" Checked="UpdateLogPreview"/>
+                    <Fluent:Button Name="btnClearLog" 
+                           Header="Clear Log"
+                           Icon="./Resources/Bin.png"
+                           LargeIcon="./Resources/Bin.png"
+                           Click="ClearLogPreview"
+                           Width="80"/>
+                </Fluent:RibbonGroupBox>
+                <Fluent:RibbonGroupBox Header="Export">
+                    <Fluent:Button Name="btnExportLog" 
+                           Header="Export Log"
+                           Icon="./Resources/Export.png"
+                           LargeIcon="./Resources/Export.png"
+                           Width="80" Click="btnExportLog_Click"/>
+                </Fluent:RibbonGroupBox>
+                <Fluent:RibbonGroupBox Header="Logging">
+                    <ListBox x:Name="lbxLog" Height="70" Width="500">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding sLogMessage}" Foreground="{Binding kLogColor}" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Fluent:RibbonGroupBox>
+            </Fluent:RibbonTabItem>
+        </Fluent:Ribbon>
+
+        <Fluent:StatusBar DockPanel.Dock="Bottom">
+            <Fluent:StatusBarItem Name="sbiLastLog" HorizontalAlignment="Right" Value="" />
+        </Fluent:StatusBar>
+
+        <Viewport3D x:Name="vpOutputView" DockPanel.Dock="Bottom"/>
+
     </DockPanel>
 </Fluent:RibbonWindow>
