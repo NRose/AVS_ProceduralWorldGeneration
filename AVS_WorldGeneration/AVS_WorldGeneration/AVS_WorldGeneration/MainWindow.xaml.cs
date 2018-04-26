@@ -19,6 +19,7 @@ using System.Windows.Threading;
 using System.Management;
 using Fluent;
 using System.IO;
+using System.ComponentModel;
 
 namespace AVS_WorldGeneration
 {
@@ -42,6 +43,9 @@ namespace AVS_WorldGeneration
         private double[] m_dVector;
         private VoronoiGraph m_kVoronoi;
 
+        private const double m_dMinimum = -1.0;
+        private const double m_dMaximum = 1.0;
+
         #endregion
 
         #region VARIABLES - 3D
@@ -60,14 +64,14 @@ namespace AVS_WorldGeneration
         #endregion
 
         #region VARIABLES - Local Distribution
-
-        private const double m_dMinimum = -1.0;
-        private const double m_dMaximum = 1.0;
-
+        
         private int m_nPhysicalProcessors = 0;
         private int m_nCores = 0;
         private int m_nLogicalProcessors = 0;
         private int m_nThreadsInUse = 1;
+
+        private double m_dVoronoiCount_Threaded = 0.0;
+        private int m_nVoronoiFinished_Threaded = 0;
 
         #endregion
 
@@ -223,17 +227,15 @@ namespace AVS_WorldGeneration
         private void GenerateVoronoi()
         {
             Logging systemLog = this.Log;
-
-            Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Start process: Generate Voronoi", LogLevel.INFO });
             int nSeed = 0;
-            if(!int.TryParse(tbxSeed.Text, out nSeed))
+            if (!int.TryParse(tbxSeed.Text, out nSeed))
             {
                 Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Seed contains illegal characters!", LogLevel.WARN });
                 return;
             }
             m_nSeed = nSeed;
             m_kRnd = new Random(m_nSeed);
-            
+
             VoronoiProgress updatePB = pbGenerateVoronoi.SetValue;
 
             double dVoronoiCount = 0;
@@ -242,32 +244,86 @@ namespace AVS_WorldGeneration
                 Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Loop count contains illegal characters!", LogLevel.WARN });
                 return;
             }
+
+            Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Start process: Generate World", LogLevel.INFO });
+            Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Info: Seed: " + m_nSeed.ToString(), LogLevel.INFO });
+            Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Info: Loop count: " + dVoronoiCount.ToString(), LogLevel.INFO });
             double dOneStep = 100.0 / (dVoronoiCount + (dVoronoiCount * 0.33f));
             double dValue = 0.0;
             m_akVectors = new List<BenTools.Mathematics.Vector>();
-            pbGenerateVoronoi.Dispatcher.Invoke(updatePB, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, dValue});
+            pbGenerateVoronoi.Dispatcher.Invoke(updatePB, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, dValue });
             /*m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMinimum, dMinimum }));
             m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMinimum, dMaximum }));
             m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMaximum, dMinimum }));
             m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMaximum, dMaximum }));*/
             Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Start process: Randomizing Vectors", LogLevel.INFO });
-            for (int i = 0; i < dVoronoiCount; i++)
+
+            if (m_nThreadsInUse > 1)
             {
-                m_dVector = new double[] { m_kRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum, m_kRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum };
-                m_akVectors.Add(new BenTools.Mathematics.Vector(m_dVector));
-                dValue += dOneStep;
-                pbGenerateVoronoi.Dispatcher.Invoke(updatePB, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, dValue });
+                if (dVoronoiCount % m_nThreadsInUse > 0)
+                {
+
+                }
+                else
+                {
+                    m_dVoronoiCount_Threaded = dVoronoiCount / m_nThreadsInUse;
+                    for (int i = 0; i < m_nThreadsInUse; i++)
+                    {
+                        Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Start process: Thread " + (i + 1).ToString() + "/" + m_nThreadsInUse.ToString() + " Generation", LogLevel.INFO });
+                        BackgroundWorker cWorker = new BackgroundWorker
+                        {
+                            WorkerReportsProgress = false,
+                            WorkerSupportsCancellation = false
+                        };
+                        cWorker.DoWork += GenerateVoronoiVectors;
+                        cWorker.RunWorkerCompleted += GenerateVoronoiVectorsFinished;
+
+                        cWorker.RunWorkerAsync();
+                    }
+                }
             }
-            Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "End process: Randomizing Vectors", LogLevel.INFO });
+            else
+            {
+                Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Start process: Main Thread Generation", LogLevel.INFO });
+                for (int i = 0; i < dVoronoiCount; i++)
+                {
+                    m_dVector = new double[] { m_kRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum, m_kRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum };
+                    m_akVectors.Add(new BenTools.Mathematics.Vector(m_dVector));
+                    dValue += dOneStep;
+                    pbGenerateVoronoi.Dispatcher.Invoke(updatePB, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, dValue });
+                }
+                m_nVoronoiFinished_Threaded++;
+                Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "End process: Main Thread Generation", LogLevel.INFO });
+            }
+            BackgroundWorker cWorkerMain = new BackgroundWorker
+            {
+                WorkerReportsProgress = false,
+                WorkerSupportsCancellation = false
+            };
+            cWorkerMain.DoWork += GenerateVoronoiThread;
+
+            cWorkerMain.RunWorkerAsync();
+        }
+
+        private void GenerateVoronoiEnd()
+        {
+            Logging systemLog = this.Log;
+
+            VoronoiProgress updatePB = pbGenerateVoronoi.SetValue;
+
+            Application.Current.Dispatcher.Invoke(new Action(() => AddLog("End process: Randomizing Vectors", LogLevel.INFO)));
+
             //m_akVectors = m_akVectors.OrderBy(o => o[0]).ThenBy(o => o[1]).ToList();
+            Application.Current.Dispatcher.Invoke(new Action(() => AddLog("Start process: Generate Voronoi", LogLevel.INFO)));
             m_kVoronoi = Fortune.ComputeVoronoiGraph(m_akVectors);
+            Application.Current.Dispatcher.Invoke(new Action(() => AddLog("End process: Generate Voronoi", LogLevel.INFO)));
             pbGenerateVoronoi.Dispatcher.Invoke(updatePB, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, 100.0 });
             if (!btnClearVoronoi.IsEnabled)
             {
                 btnDrawVoronoi.IsEnabled = true;
             }
             vpOutputView.Focus();
-            Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "End process: Generate Voronoi", LogLevel.INFO });
+            Application.Current.Dispatcher.Invoke(new Action(() => AddLog("End process: Generate World", LogLevel.INFO)));
         }
 
         private void DrawVoronoi()
@@ -388,6 +444,60 @@ namespace AVS_WorldGeneration
         #endregion
 
         #region Tab Distirbution
+
+        private void BtnUseThreads_Click(object sender, RoutedEventArgs e)
+        {
+            if(!int.TryParse(tbxThreadCount.Text, out m_nThreadsInUse))
+            {
+                //HAT NICHT GEKLAPPT TODO: FEHLERMELDUNG ANZEIGEN
+            }
+        }
+
+        private void GenerateVoronoiThread(object sender, DoWorkEventArgs e)
+        {
+            while (m_nVoronoiFinished_Threaded < m_nThreadsInUse)
+            {
+                Thread.Sleep(1);
+            }
+            Application.Current.Dispatcher.Invoke(new Action(() => GenerateVoronoiEnd()));
+        }
+
+        private void GenerateVoronoiVectors(object sender, DoWorkEventArgs e)
+        {
+            VoronoiProgress updatePB = pbGenerateVoronoi.SetValue;
+            double dOneStep = 100.0 / (m_dVoronoiCount_Threaded + (m_dVoronoiCount_Threaded * 0.33f));
+            double dValue = 0.0;
+            for (int i = 0; i < m_dVoronoiCount_Threaded; i++)
+            {
+                m_dVector = new double[] { m_kRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum, m_kRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum };
+                m_akVectors.Add(new BenTools.Mathematics.Vector(m_dVector));
+                dValue += dOneStep;
+                pbGenerateVoronoi.Dispatcher.Invoke(updatePB, System.Windows.Threading.DispatcherPriority.Background, new object[] { ProgressBar.ValueProperty, dValue });
+            }
+        }
+
+        private void GenerateVoronoiVectorsFinished(object sender, RunWorkerCompletedEventArgs e)
+        {
+            m_nVoronoiFinished_Threaded++;
+            if (e.Cancelled)
+            {
+                Application.Current.Dispatcher.Invoke(new Action(() => AddLog("End process: Thread " + m_nVoronoiFinished_Threaded.ToString() + "/" + m_nThreadsInUse.ToString() + " Generation", LogLevel.WARN)));
+            }
+            else if (e.Error != null)
+            {
+                Application.Current.Dispatcher.Invoke(new Action(() => AddLog("End process: Thread " + m_nVoronoiFinished_Threaded.ToString() + "/" + m_nThreadsInUse.ToString() + " Generation", LogLevel.ERROR)));
+            }
+            else
+            {
+                Application.Current.Dispatcher.Invoke(new Action(() => AddLog("End process: Thread " + m_nVoronoiFinished_Threaded.ToString() + "/" + m_nThreadsInUse.ToString() + " Generation", LogLevel.INFO)));
+            }
+        }
+        
+        private void AddLog(string sMessage, LogLevel eLogLevel)
+        {
+            Logging systemLog = this.Log;
+            Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { sMessage, eLogLevel });
+        }
 
         #endregion
 

@@ -82,6 +82,7 @@
                            Header="Use Threads"
                            Icon="./Resources/Cores.png"
                            LargeIcon="./Resources/Cores.png"
+                           Click="BtnUseThreads_Click"
                            Width="80"/>
                 </Fluent:RibbonGroupBox>
                 <Fluent:RibbonGroupBox Header="Network Distribution">
