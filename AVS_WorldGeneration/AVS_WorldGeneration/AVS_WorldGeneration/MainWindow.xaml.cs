@@ -27,23 +27,25 @@ namespace AVS_WorldGeneration
     /// </summary>
     public partial class MainWindow : RibbonWindow
     {
-        private const double m_dMinimum = -1.0;
-        private const double m_dMaximum = 1.0;
+        #region DELEGATES
 
-        private int m_nPhysicalProcessors = 0;
-        private int m_nCores = 0;
-        private int m_nLogicalProcessors = 0;
-        private int m_nThreadsInUse = 1;
+        delegate void VoronoiProgress(DependencyProperty dp, Object value);
+        delegate void Logging(string sLogMessage, LogLevel eLogLevel);
 
-        #region Voronoi Stuff
+        #endregion
+
+        #region VARIABLES - Voronoi
+
         private List<BenTools.Mathematics.Vector> m_akVectors = new List<BenTools.Mathematics.Vector>();
         private Random m_kRnd = new Random();
         private int m_nSeed = 0;
         private double[] m_dVector;
-        VoronoiGraph m_kVoronoi;
+        private VoronoiGraph m_kVoronoi;
+
         #endregion
 
-        #region 3D Stuff
+        #region VARIABLES - 3D
+
         private Model3DGroup m_kMainModel3DGroup = new Model3DGroup();
         private PerspectiveCamera m_kMainCamera;
 
@@ -54,7 +56,22 @@ namespace AVS_WorldGeneration
         private const double m_dCameraDPhi = 0.1;
         private const double m_dCameraDTheta = 0.1;
         private const double m_dCameraDR = 0.1;
+
         #endregion
+
+        #region VARIABLES - Local Distribution
+
+        private const double m_dMinimum = -1.0;
+        private const double m_dMaximum = 1.0;
+
+        private int m_nPhysicalProcessors = 0;
+        private int m_nCores = 0;
+        private int m_nLogicalProcessors = 0;
+        private int m_nThreadsInUse = 1;
+
+        #endregion
+
+        #region General Main Window
 
         public MainWindow()
         {
@@ -93,8 +110,115 @@ namespace AVS_WorldGeneration
             tllbSystemInfo.Content = "Number of physical processors:\t" + m_nPhysicalProcessors.ToString() + "\nNumber of cores:\t\t\t" + m_nCores.ToString() + "\nNumber of logical processors:\t" + m_nLogicalProcessors.ToString() + "\nNumber of threads in use:\t\t" + m_nThreadsInUse.ToString();
         }
 
-        delegate void VoronoiProgress(DependencyProperty dp, Object value);
-        delegate void Logging(string sLogMessage, LogLevel eLogLevel);
+        private void DefineLights()
+        {
+            AmbientLight kAmbientLight = new AmbientLight(Colors.Gray);
+            DirectionalLight kDirectionalLight = new DirectionalLight(Colors.Gray, new Vector3D(-1.0, -3.0, -2.0));
+            m_kMainModel3DGroup.Children.Add(kAmbientLight);
+            m_kMainModel3DGroup.Children.Add(kDirectionalLight);
+        }
+
+        private void DefineModel(Model3DGroup kModelGroup)
+        {
+            MeshGeometry3D kMesh = new MeshGeometry3D();
+
+            const double dXMin = -1.5;
+            const double dXMax = 1.5;
+            const double dX = 0.05;
+            const double dZMin = -1.5;
+            const double dZMax = 1.5;
+            const double dZ = 0.05;
+
+            for (double x = dXMin; x <= dXMax - dX; x += dX)
+            {
+                for (double z = dZMin; z <= dZMax - dZ; z += dZ)
+                {
+                    Point3D p00 = new Point3D(x, Helper.F(x, z), z);
+                    Point3D p10 = new Point3D(x + dX, Helper.F(x + dX, z), z);
+                    Point3D p01 = new Point3D(x, Helper.F(x, z + dZ), z + dZ);
+                    Point3D p11 = new Point3D(x + dX, Helper.F(x + dX, z + dZ), z + dZ);
+
+                    Helper.AddTriangle(kMesh, p00, p01, p11);
+                    Helper.AddTriangle(kMesh, p00, p11, p10);
+                }
+            }
+
+            DiffuseMaterial kSurfaceMaterial = new DiffuseMaterial(Brushes.Orange);
+            GeometryModel3D kSurfaceModel = new GeometryModel3D(kMesh, kSurfaceMaterial);
+            kSurfaceModel.BackMaterial = kSurfaceMaterial;
+            kModelGroup.Children.Add(kSurfaceModel);
+        }
+
+        private void PositionCamera()
+        {
+            double dY = m_dCameraR * Math.Sin(m_dCameraPhi);
+            double dHYP = m_dCameraR * Math.Cos(m_dCameraPhi);
+            double dX = dHYP * Math.Cos(m_dCameraTheta);
+            double dZ = dHYP * Math.Sin(m_dCameraTheta);
+
+            m_kMainCamera.Position = new Point3D(dX, dY, dZ);
+            m_kMainCamera.LookDirection = new Vector3D(-dX, -dY, -dZ);
+            m_kMainCamera.UpDirection = new Vector3D(0, 1, 0);
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            switch (e.Key)
+            {
+                case Key.Up:
+                case Key.W:
+                    m_dCameraPhi += m_dCameraDPhi;
+                    if (m_dCameraPhi > Math.PI / 2.0)
+                        m_dCameraPhi = Math.PI / 2.0;
+                    break;
+                case Key.Down:
+                case Key.S:
+                    m_dCameraPhi -= m_dCameraDPhi;
+                    if (m_dCameraPhi < -Math.PI / 2.0)
+                        m_dCameraPhi = -Math.PI / 2.0;
+                    break;
+                case Key.Left:
+                case Key.A:
+                    m_dCameraTheta += m_dCameraDTheta;
+                    break;
+                case Key.Right:
+                case Key.D:
+                    m_dCameraTheta -= m_dCameraDTheta;
+                    break;
+                case Key.Add:
+                case Key.OemPlus:
+                    m_dCameraR -= m_dCameraDR;
+                    if (m_dCameraR < m_dCameraDR)
+                        m_dCameraR = m_dCameraDR;
+                    break;
+                case Key.Subtract:
+                case Key.OemMinus:
+                    m_dCameraR += m_dCameraDR;
+                    break;
+                default:
+                    break;
+            }
+            PositionCamera();
+        }
+
+        #endregion
+
+        #region Tab World Generation
+
+        private void BtnGenerateVoronoi_Click(object sender, RoutedEventArgs e)
+        {
+            GenerateVoronoi();
+        }
+
+        private void BtnDrawVoronoi_Click(object sender, RoutedEventArgs e)
+        {
+            DrawVoronoi();
+        }
+
+        private void BtnClearVoronoi_Click(object sender, RoutedEventArgs e)
+        {
+            ClearVoronoi();
+        }
 
         private void GenerateVoronoi()
         {
@@ -261,129 +385,35 @@ namespace AVS_WorldGeneration
             btnDrawVoronoi.IsEnabled = true;
         }
 
-        private void BtnGenerateVoronoi_Click(object sender, RoutedEventArgs e)
+        #endregion
+
+        #region Tab Distirbution
+
+        #endregion
+
+        #region Log System
+
+        private void BtnClearLogPreview_Click(object sender, RoutedEventArgs e)
         {
-            GenerateVoronoi();
-        }
-
-        private void BtnDrawVoronoi_Click(object sender, RoutedEventArgs e)
-        {
-            DrawVoronoi();
-        }
-
-        private void BtnClearVoronoi_Click(object sender, RoutedEventArgs e)
-        {
-            ClearVoronoi();
-        }
-
-        private void DefineLights()
-        {
-            AmbientLight kAmbientLight = new AmbientLight(Colors.Gray);
-            DirectionalLight kDirectionalLight = new DirectionalLight(Colors.Gray, new Vector3D(-1.0, -3.0, -2.0));
-            m_kMainModel3DGroup.Children.Add(kAmbientLight);
-            m_kMainModel3DGroup.Children.Add(kDirectionalLight);
-        }
-
-        private void DefineModel(Model3DGroup kModelGroup)
-        {
-            MeshGeometry3D kMesh = new MeshGeometry3D();
-
-            const double dXMin = -1.5;
-            const double dXMax = 1.5;
-            const double dX = 0.05;
-            const double dZMin = -1.5;
-            const double dZMax = 1.5;
-            const double dZ = 0.05;
-
-            for(double x = dXMin; x <= dXMax - dX; x += dX)
-            {
-                for(double z = dZMin; z <= dZMax - dZ; z += dZ)
-                {
-                    Point3D p00 = new Point3D(x, F(x, z), z);
-                    Point3D p10 = new Point3D(x + dX, F(x + dX, z), z);
-                    Point3D p01 = new Point3D(x, F(x, z + dZ), z + dZ);
-                    Point3D p11 = new Point3D(x + dX, F(x + dX, z + dZ), z + dZ);
-
-                    Helper.AddTriangle(kMesh, p00, p01, p11);
-                    Helper.AddTriangle(kMesh, p00, p11, p10);
-                }
-            }
-
-            DiffuseMaterial kSurfaceMaterial = new DiffuseMaterial(Brushes.Orange);
-            GeometryModel3D kSurfaceModel = new GeometryModel3D(kMesh, kSurfaceMaterial);
-            kSurfaceModel.BackMaterial = kSurfaceMaterial;
-            kModelGroup.Children.Add(kSurfaceModel);
-        }
-
-        private double F(double dX, double dZ)
-        {
-            const double dTwoPI = 2 * 3.14159265;
-            double dR2 = dX * dX + dZ * dZ;
-            double dR = Math.Sqrt(dR2);
-            double dTheta = Math.Atan2(dZ, dX);
-
-            return Math.Exp(-dR2) * Math.Sin(dTwoPI * dR) * Math.Cos(3 * dTheta);
-        }
-
-        private void Window_KeyDown(object sender, KeyEventArgs e)
-        {
-            switch (e.Key)
-            {
-                case Key.Up:
-                case Key.W:
-                    m_dCameraPhi += m_dCameraDPhi;
-                    if (m_dCameraPhi > Math.PI / 2.0)
-                        m_dCameraPhi = Math.PI / 2.0;
-                    break;
-                case Key.Down:
-                case Key.S:
-                    m_dCameraPhi -= m_dCameraDPhi;
-                    if (m_dCameraPhi < -Math.PI / 2.0)
-                        m_dCameraPhi = -Math.PI / 2.0;
-                    break;
-                case Key.Left:
-                case Key.A:
-                    m_dCameraTheta += m_dCameraDTheta;
-                    break;
-                case Key.Right:
-                case Key.D:
-                    m_dCameraTheta -= m_dCameraDTheta;
-                    break;
-                case Key.Add:
-                case Key.OemPlus:
-                    m_dCameraR -= m_dCameraDR;
-                    if (m_dCameraR < m_dCameraDR)
-                        m_dCameraR = m_dCameraDR;
-                    break;
-                case Key.Subtract:
-                case Key.OemMinus:
-                    m_dCameraR += m_dCameraDR;
-                    break;
-                default:
-                    break;
-            }
-            PositionCamera();
-        }
-
-        private void PositionCamera()
-        {
-            double dY = m_dCameraR * Math.Sin(m_dCameraPhi);
-            double dHYP = m_dCameraR * Math.Cos(m_dCameraPhi);
-            double dX = dHYP * Math.Cos(m_dCameraTheta);
-            double dZ = dHYP * Math.Sin(m_dCameraTheta);
-
-            m_kMainCamera.Position = new Point3D(dX, dY, dZ);
-            m_kMainCamera.LookDirection = new Vector3D(-dX, -dY, -dZ);
-            m_kMainCamera.UpDirection = new Vector3D(0, 1, 0);
-        }
-
-        public void Log(string sLogMessage, LogLevel eLogLevel)
-        {
-            List<LogItem> akTempLogs = Helper.akLogger;
-            Helper.akLogger = new List<LogItem>();
-            Helper.akLogger.Add(new LogItem(sLogMessage, eLogLevel));
-            Helper.akLogger.AddRange(akTempLogs);
+            Logging systemLog = this.Log;
+            Dispatcher.CurrentDispatcher.Invoke(systemLog, DispatcherPriority.Background, args: new object[] { "::CLEAR::LOG::PREVIEW::", LogLevel.NONE });
             UpdateLogPreview();
+        }
+
+        private void BtnExportLog_Click(object sender, RoutedEventArgs e)
+        {
+            string sLogFileName = "LogFile_" + DateTime.Now.ToShortDateString().Replace(".", "-") + "_" + DateTime.Now.ToLongTimeString().Replace(":", "-") + ".txt";
+            StreamWriter cSW = new StreamWriter(sLogFileName);
+
+            foreach (LogItem cItem in lbxLog.ItemsSource)
+            {
+                cSW.WriteLine(cItem.sLogMessage);
+            }
+
+            cSW.Close();
+            lbxLog.ItemsSource = null;
+            lbxLog.Items.Clear();
+            sbiLastLog.Value = sLogFileName + " successfully saved!     ";
         }
 
         private void UpdateLogPreview(object sender, RoutedEventArgs e)
@@ -393,14 +423,14 @@ namespace AVS_WorldGeneration
 
         public void UpdateLogPreview()
         {
-            if(lbxLog == null || sbiLastLog == null)
+            if (lbxLog == null || sbiLastLog == null)
             {
                 return;
             }
 
             List<LogItem> akTempLogs = new List<LogItem>();
 
-            for(int i = 0; i < Helper.akLogger.Count; i++)
+            for (int i = 0; i < Helper.akLogger.Count; i++)
             {
                 switch (Helper.akLogger[i].eLogLevel)
                 {
@@ -451,27 +481,15 @@ namespace AVS_WorldGeneration
             sbiLastLog.Value = "Last log message:     " + akTempLogs[0].sLogMessage + "     ";
         }
 
-        private void ClearLogPreview(object sender, RoutedEventArgs e)
+        public void Log(string sLogMessage, LogLevel eLogLevel)
         {
-            Logging systemLog = this.Log;
-            Dispatcher.CurrentDispatcher.Invoke(systemLog, DispatcherPriority.Background, args: new object[] { "::CLEAR::LOG::PREVIEW::", LogLevel.NONE });
+            List<LogItem> akTempLogs = Helper.akLogger;
+            Helper.akLogger = new List<LogItem>();
+            Helper.akLogger.Add(new LogItem(sLogMessage, eLogLevel));
+            Helper.akLogger.AddRange(akTempLogs);
             UpdateLogPreview();
         }
 
-        private void btnExportLog_Click(object sender, RoutedEventArgs e)
-        {
-            string sLogFileName = "LogFile_" + DateTime.Now.ToShortDateString().Replace(".", "-") + "_" + DateTime.Now.ToLongTimeString().Replace(":", "-") + ".txt";
-            StreamWriter cSW = new StreamWriter(sLogFileName);
-
-            foreach(LogItem cItem in lbxLog.ItemsSource)
-            {
-                cSW.WriteLine(cItem.sLogMessage);
-            }
-
-            cSW.Close();
-            lbxLog.ItemsSource = null;
-            lbxLog.Items.Clear();
-            sbiLastLog.Value = sLogFileName + " successfully saved!     ";
-        }
+        #endregion
     }
 }
