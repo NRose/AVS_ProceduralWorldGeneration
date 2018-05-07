@@ -21,15 +21,15 @@ namespace AVS_WorldGeneration.WcfCommunication
     public interface IVoronoiGenerationService
     {
         [OperationContract]
-        void sendData(TestData data);
+        String sendData(TestData data);
     }
 
     public class VoronoiGenerationService : IVoronoiGenerationService
     {
         #region IDataService Members
-        public void sendData(TestData data)
+        public String sendData(TestData data)
         {
-            Console.WriteLine("Send Data with name " + data.Name + "and value " + data.Value);
+           return "Send Data with name " + data.Name + "and value " + data.Value;
         }
         #endregion
     }

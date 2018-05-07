@@ -14,6 +14,7 @@ namespace AVS_WorldGeneration.WcfCommunication
         public void DoWork()
         {
             ServiceHost host = new ServiceHost(typeof(VoronoiGenerationService));
+            
             host.Open();
         }
     }
