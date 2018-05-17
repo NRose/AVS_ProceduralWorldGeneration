@@ -18,7 +18,7 @@ namespace ServiceCallerApplication
         /// <param name="port">Port where the service is running.</param>
         /// <returns>A list with results on the distribution.</returns>
 
-        public static List<double[]> RunDistribution(List<IPAddress> ipAddresses, int port)
+        public static List<double[]> RunDistribution(List<IPAddress> ipAddresses, int port, List<VoronoiData> voronoiData)
         {
             List<double[]> result = new List<double[]>();
 
@@ -32,8 +32,10 @@ namespace ServiceCallerApplication
             }
 
             // create channels to all nodes
-            foreach (EndpointAddress epa in epAdresses)
+            for(int i = 0; i < epAdresses.Count; i++)
             {
+                EndpointAddress epa = epAdresses[i];
+                VoronoiData data = voronoiData[i];
                 BasicHttpBinding binding = new BasicHttpBinding();
 
                 try
@@ -42,14 +44,8 @@ namespace ServiceCallerApplication
 
                     // Create a channel.
                     IVoronoiGenerationService wcfClient = myChannelFactory.CreateChannel();
-                    VoronoiData data = new VoronoiData
-                    {
-                        Count = 1,
-                        Progress = 22,
-                        Minimum = 1,
-                        Maximum = 10
-                    };
-                    List<double[]> vectors = wcfClient.RandomiseVectors(data).Vectors; // TODO: Entscheiden, welche Nodes welche Berechnungen durchführen
+
+                    List<double[]> vectors = wcfClient.RandomiseVectors(data).Vectors;
                     result.Concat(vectors);
                     ((IClientChannel)wcfClient).Close();
                 }

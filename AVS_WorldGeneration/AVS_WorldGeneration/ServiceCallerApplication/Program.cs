@@ -19,8 +19,15 @@ namespace ServiceCallerApplication
 
             byte[] address = { 139, 6, 65, 51 };
             ipAddresses.Add(new IPAddress(address));
+            VoronoiData data = new VoronoiData
+            {
+                Count = 1,
+                Progress = 22,
+                Minimum = 1,
+                Maximum = 10
+            };
 
-            Console.Write(ServiceCallHelper.RunDistribution(ipAddresses, port));
+            Console.Write(ServiceCallHelper.RunDistribution(ipAddresses, port, new List<VoronoiData> { data }));
             
 
         }
