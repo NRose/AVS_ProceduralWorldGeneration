@@ -4,6 +4,6 @@
              xmlns:local="clr-namespace:AVS_WorldGeneration"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <ResourceDictionary Source="pack://application:,,,/Fluent;component/Themes/Generic.xaml" />
     </Application.Resources>
 </Application>
