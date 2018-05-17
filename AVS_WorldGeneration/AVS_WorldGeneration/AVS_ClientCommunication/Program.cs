@@ -27,8 +27,8 @@ namespace AVS_ClientCommunication
 
         public void StartStuff()
         {
-            Byte[] rawIp = { 192, 168, 0, 200 };
-            Byte[] rawMask = { 255, 255, 0, 00 };
+            //Byte[] rawIp = { 192, 168, 0, 200 };
+            //Byte[] rawMask = { 255, 255, 0, 00 };
 
             //Console.WriteLine(Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString());
             //Console.WriteLine(BroadcastHelper.GetLocalIPAddress());
@@ -36,33 +36,52 @@ namespace AVS_ClientCommunication
             IPAddress ipAddress = IPHelper.GetLocalIPAddress();
             IPAddress subnetMask = IPHelper.GetLocalSubmask();
 
-            String query = "Hallo";
-            byte length = (byte)System.Text.ASCIIEncoding.Unicode.GetByteCount(query);
+            String query = "HELLO. SEARCHING FOR DISTRIBUTED SYSTEM!";
+            int length = 1024;
             byte[] sendContent = new Byte[length];
+            sendContent = System.Text.ASCIIEncoding.Unicode.GetBytes(query);
 
             IPAddress broadcast = IPHelper.GetBroadcastAddress(ipAddress, subnetMask);
             Console.WriteLine(broadcast);
 
             try
             {
-                udpSocket = IPHelper.SendBroadcastPacketToBroadcastIp(broadcast, 7345, sendContent);
-                Byte[] receiveBuffer = new Byte[12];
+                Console.WriteLine("Send broadcast");
 
-                Console.WriteLine("Send");
+                SocketCommunicationSender serverSocket = new SocketCommunicationSender(broadcast, 7345, 1024);
+                
+                Socket socket = serverSocket.Send();
 
-                //udpSocket.Receive(new Byte[10], SocketFlags.None);
-                socketArgs = new SocketAsyncEventArgs();
-                socketArgs.SetBuffer(receiveBuffer, 0, receiveBuffer.Length);
 
-                Console.WriteLine("wait");
-                Thread.Sleep(10000);
+                //clientSocket.Listen();
+                //udpSocket = IPHelper.SendBroadcastPacketToBroadcastIp(broadcast, 7345, sendContent);
+                //udpSocket.Bind(new IPEndPoint())
+                //Byte[] receiveBuffer = new Byte[length];
 
-                udpSocket.ReceiveAsync(socketArgs);
-                Console.WriteLine("Received");
-                foreach(Byte line in receiveBuffer)
-                {
-                    Console.WriteLine(line);
-                }
+                //udpSocket.Receive(receiveBuffer);
+
+                //String receiveText = System.Text.ASCIIEncoding.Unicode.GetString(receiveBuffer);
+                //Console.WriteLine("Received message: " + receiveText);
+
+                //Thread.Sleep(10000);
+
+                //sendContent = System.Text.ASCIIEncoding.Unicode.GetBytes("HELLO. SEARCHING FOR DISTRIBUTED SYSTEM!");
+                //udpSocket = IPHelper.SendBroadcastPacketToBroadcastIp(broadcast, 7345, sendContent);
+                
+
+
+
+                //Console.WriteLine("Send");
+
+                ////udpSocket.Receive(new Byte[10], SocketFlags.None);
+                //socketArgs = new SocketAsyncEventArgs();
+                //socketArgs.SetBuffer(receiveBuffer, 0, receiveBuffer.Length);
+                //udpSocket.ReceiveAsync(socketArgs);
+
+
+
+                Console.ReadLine();
+
 
             }
             finally

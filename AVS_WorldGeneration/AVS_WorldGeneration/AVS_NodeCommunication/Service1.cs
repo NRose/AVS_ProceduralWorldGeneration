@@ -8,7 +8,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.ServiceProcess;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using WcfServiceLibrary1;
 
 namespace AVS_NodeCommunication
 {
@@ -38,17 +40,27 @@ Computername
 
             Socket socket = null;
 
-            Byte[] rawIp = { 127, 0, 0, 1 };
-            IPAddress ipAddress = new IPAddress(rawIp);
+            //IPHelper.GetLocalIPAddress
+            //Byte[] rawIp = { 127, 0, 0, 1 };
+            //IPAddress ipAddress = new IPAddress(rawIp);
 
-            var destinationEndpoint = new IPEndPoint(ipAddress,7345);
+            var remoteEndpoint = new IPEndPoint(IPAddress.Any,7345);
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, 1);
+            socket.Bind(remoteEndpoint);
 
             socketArgs = new SocketAsyncEventArgs();
             socketArgs.SetBuffer(receiveBuffer, 0, receiveBuffer.Length);
+            Console.WriteLine("Waiting for a client ...");
+
             socket.Receive(receiveBuffer,SocketFlags.None);
-            Console.WriteLine("received");
+            
+
+            Console.WriteLine("Received");
+            foreach (Byte line in receiveBuffer)
+            {
+                Console.WriteLine(line);
+            }
 
         }
 

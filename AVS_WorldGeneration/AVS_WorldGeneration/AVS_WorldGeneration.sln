@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AVS_ClientCommunication", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AVS_NodeCommunication", "AVS_NodeCommunication\AVS_NodeCommunication.csproj", "{47BA1ED7-18E3-4560-BF74-D7D398C47892}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AVS_TestNodeCommunication", "TestClientServer\AVS_TestNodeCommunication.csproj", "{027A021C-671B-4F5B-9F6C-9548551D2168}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{47BA1ED7-18E3-4560-BF74-D7D398C47892}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{47BA1ED7-18E3-4560-BF74-D7D398C47892}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{47BA1ED7-18E3-4560-BF74-D7D398C47892}.Release|Any CPU.Build.0 = Release|Any CPU
+		{027A021C-671B-4F5B-9F6C-9548551D2168}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{027A021C-671B-4F5B-9F6C-9548551D2168}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{027A021C-671B-4F5B-9F6C-9548551D2168}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{027A021C-671B-4F5B-9F6C-9548551D2168}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
