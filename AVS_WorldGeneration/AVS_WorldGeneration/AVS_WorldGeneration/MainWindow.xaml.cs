@@ -295,26 +295,22 @@ namespace AVS_WorldGeneration
 
             if (m_nThreadsInUse > 1)
             {
-                if (dVoronoiCount % m_nThreadsInUse > 0)
-                {
+                m_dVoronoiCount_Threaded = dVoronoiCount / m_nThreadsInUse;
+                double dExtra = dVoronoiCount % m_nThreadsInUse;
 
-                }
-                else
+                for (int i = 0; i < m_nThreadsInUse; i++)
                 {
-                    m_dVoronoiCount_Threaded = dVoronoiCount / m_nThreadsInUse;
-                    for (int i = 0; i < m_nThreadsInUse; i++)
+                    Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Start process: Thread " + (i + 1).ToString() + "/" + m_nThreadsInUse.ToString() + " Generation", LogLevel.INFO });
+                    BackgroundWorker cWorker = new BackgroundWorker
                     {
-                        Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Start process: Thread " + (i + 1).ToString() + "/" + m_nThreadsInUse.ToString() + " Generation", LogLevel.INFO });
-                        BackgroundWorker cWorker = new BackgroundWorker
-                        {
-                            WorkerReportsProgress = false,
-                            WorkerSupportsCancellation = false
-                        };
-                        cWorker.DoWork += GenerateVoronoiVectors;
-                        cWorker.RunWorkerCompleted += GenerateVoronoiVectorsFinished;
+                        WorkerReportsProgress = false,
+                        WorkerSupportsCancellation = false
+                    };
+                    cWorker.DoWork += GenerateVoronoiVectors;
+                    cWorker.RunWorkerCompleted += GenerateVoronoiVectorsFinished;
 
-                        cWorker.RunWorkerAsync();
-                    }
+                    cWorker.RunWorkerAsync(dVoronoiCount / m_nThreadsInUse + dExtra);
+                    dExtra = 0.0;
                 }
             }
             else
@@ -337,7 +333,7 @@ namespace AVS_WorldGeneration
             };
             cWorkerMain.DoWork += GenerateVoronoiThread;
 
-            cWorkerMain.RunWorkerAsync();
+            cWorkerMain.RunWorkerAsync(dVoronoiCount);
         }
 
         private void GenerateVoronoiEnd()
@@ -512,10 +508,10 @@ namespace AVS_WorldGeneration
         private void GenerateVoronoiVectors(object sender, DoWorkEventArgs e)
         {
             VoronoiProgress updatePB = IncreaseProgress;
-            double dOneStep = 100.0 / m_nThreadsInUse / m_dVoronoiCount_Threaded;//(m_dVoronoiCount_Threaded + (m_dVoronoiCount_Threaded * 0.33f));
+            double dOneStep = 100.0 / m_nThreadsInUse / (double)e.Argument;//(m_dVoronoiCount_Threaded + (m_dVoronoiCount_Threaded * 0.33f));
             List<BenTools.Mathematics.Vector> acTempList = new List<BenTools.Mathematics.Vector>();
 
-            for (int i = 0; i < m_dVoronoiCount_Threaded; i++)
+            for (int i = 0; i < (double)e.Argument; i++)
             {
                 m_dVector = new double[] { m_kRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum, m_kRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum };
                 acTempList.Add(new BenTools.Mathematics.Vector(m_dVector));
