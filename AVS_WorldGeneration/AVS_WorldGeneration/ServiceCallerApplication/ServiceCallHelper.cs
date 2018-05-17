@@ -18,9 +18,9 @@ namespace ServiceCallerApplication
         /// <param name="port">Port where the service is running.</param>
         /// <returns>A list with results on the distribution.</returns>
 
-        public static List<BenTools.Mathematics.Vector> RunDistribution(List<IPAddress> ipAddresses, int port)
+        public static List<double[]> RunDistribution(List<IPAddress> ipAddresses, int port)
         {
-            List<BenTools.Mathematics.Vector> result = new List<BenTools.Mathematics.Vector>();
+            List<double[]> result = new List<double[]>();
 
             // Create list of endpoint addresses
             List<EndpointAddress> epAdresses = new List<EndpointAddress>();
@@ -49,7 +49,7 @@ namespace ServiceCallerApplication
                         Minimum = 1,
                         Maximum = 10
                     };
-                    List<BenTools.Mathematics.Vector> vectors = wcfClient.RandomiseVectors(data).Vectors; // TODO: Entscheiden, welche Nodes welche Berechnungen durchführen
+                    List<double[]> vectors = wcfClient.RandomiseVectors(data).Vectors; // TODO: Entscheiden, welche Nodes welche Berechnungen durchführen
                     result.Concat(vectors);
                     ((IClientChannel)wcfClient).Close();
                 }

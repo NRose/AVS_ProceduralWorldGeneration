@@ -57,7 +57,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\WcfServiceLibrary1\AVS_WcfService.csproj">
+    <ProjectReference Include="..\AVS_WcfService\AVS_WcfService.csproj">
       <Project>{B2D57392-57C0-4AF5-8C6B-85929BB217CB}</Project>
       <Name>AVS_WcfService</Name>
     </ProjectReference>

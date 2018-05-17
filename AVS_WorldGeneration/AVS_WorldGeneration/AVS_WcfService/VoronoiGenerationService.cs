@@ -24,7 +24,7 @@ namespace AVS_WorldGeneration.WcfCommunication
     public class VectorList
     {
         [DataMember]
-        public List<BenTools.Mathematics.Vector> Vectors { get; set; }
+        public List<double[]> Vectors { get; set; }
     }
 
         [ServiceContract]
@@ -38,10 +38,8 @@ namespace AVS_WorldGeneration.WcfCommunication
     {
         public VectorList RandomiseVectors(VoronoiData data)
         {
-            List<BenTools.Mathematics.Vector> vectors = new List<BenTools.Mathematics.Vector>
-            {
-                new BenTools.Mathematics.Vector(2)
-            };
+            List<double[]> vectors = new List<double[]>();
+            vectors.Add(new double[] { 1.0, 2.0 });
             VectorList list = new VectorList();
             list.Vectors = vectors;
             return list;
