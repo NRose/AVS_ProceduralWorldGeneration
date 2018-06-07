@@ -34,6 +34,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ControlzEx">
+      <HintPath>ThirdPartyLibraries\ControlzEx.dll</HintPath>
+    </Reference>
+    <Reference Include="Fluent">
+      <HintPath>ThirdPartyLibraries\Fluent.dll</HintPath>
+    </Reference>
     <Reference Include="FortuneVoronoi, Version=1.0.6374.16463, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>ThirdPartyLibraries\FortuneVoronoi.dll</HintPath>
@@ -41,6 +47,11 @@
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Windows.Interactivity, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>ThirdPartyLibraries\System.Windows.Interactivity.dll</HintPath>
+    </Reference>
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -101,6 +112,14 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Resources\Brush.png" />
+    <Resource Include="Resources\Erasor.png" />
+    <Resource Include="Resources\Gear.png" />
+    <Resource Include="Resources\Distribute.png" />
+    <Resource Include="Resources\Bin.png" />
+    <Resource Include="Resources\Export.png" />
+    <Resource Include="Resources\Search.png" />
+    <Resource Include="Resources\Cores.png" />
     <Content Include="ThirdPartyLibraries\FortuneVoronoi.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

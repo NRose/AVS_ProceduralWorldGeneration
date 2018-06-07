@@ -143,5 +143,15 @@ namespace AVS_WorldGeneration
             return points.Count - 1;
         }
 
+        public static double F(double dX, double dZ)
+        {
+            const double dTwoPI = 2 * 3.14159265;
+            double dR2 = dX * dX + dZ * dZ;
+            double dR = Math.Sqrt(dR2);
+            double dTheta = Math.Atan2(dZ, dX);
+
+            return Math.Exp(-dR2) * Math.Sin(dTwoPI * dR) * Math.Cos(3 * dTheta);
+        }
+
     }
 }
