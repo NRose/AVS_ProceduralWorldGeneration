@@ -8,7 +8,7 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="635" Width="1415" KeyDown="Window_KeyDown" Icon="./Resources/Distribute.png">
     <DockPanel>
-        <Fluent:Ribbon DockPanel.Dock="Top" QuickAccessToolBarHeight="0">
+        <Fluent:Ribbon DockPanel.Dock="Top" QuickAccessToolBarHeight="0" SelectedTabIndex="1">
             <!--Backstage-->
             <Fluent:Ribbon.Menu>
                 <Fluent:Backstage>
@@ -98,8 +98,41 @@
                            LargeIcon="./Resources/Distribute.png"
                            IsEnabled="False"
                            Width="80"/>
-                    <ListBox x:Name="lbxNodes" Height="70" Width="500" SelectionMode="Multiple">
-                    </ListBox>
+                    <ListView x:Name="lbxNodes" Height="60" Width="700">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <CheckBox Tag="{Binding sIPAddress}" IsChecked="{Binding bInUse}" VerticalAlignment="Center" Click="TglNode_Click"></CheckBox>
+                                    <TextBlock Text="{Binding sIPAddress}" Width="100" Padding="5" />
+                                    <TextBlock Text=" || Physical Processors: " Padding="5" />
+                                    <TextBlock Text="{Binding nProcessorsPhysical}" Width="20" Padding="5" />
+                                    <TextBlock Text=" | Cores: " Padding="5" />
+                                    <TextBlock Text="{Binding nCores}" Width="20" Padding="5" />
+                                    <TextBlock Text=" | Logical Processors: " Padding="5" />
+                                    <TextBlock Text="{Binding nProcessorsLogical}" Width="20" Padding="5" />
+                                    <TextBlock Text=" | Threads in use: " Padding="5" />
+                                    <Button Tag="{Binding sIPAddress}" Height="20" Width="20" Click="MinusNode_Click">-</Button>
+                                    <TextBlock Text="{Binding nThreads}" TextAlignment="Right" Width="25" Padding="5" />
+                                    <Button Tag="{Binding sIPAddress}" Height="20" Width="20" Click="PlusNode_Click">+</Button>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                <Setter Property="Focusable" Value="false"/>
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListViewItem">
+                                            <ContentPresenter />
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                    </ListView>
+                    <ProgressBar x:Name="pbSearchForNodes" Height="5" Margin="0,5,0,0" Foreground="#FFAF0A2D"/>
                 </Fluent:RibbonGroupBox>
             </Fluent:RibbonTabItem>
 

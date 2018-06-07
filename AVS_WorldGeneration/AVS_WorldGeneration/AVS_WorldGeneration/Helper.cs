@@ -158,5 +158,15 @@ namespace AVS_WorldGeneration
             public static string SEARCH_FOR_NODES = "HELLO. SEARCHING FOR DISTRIBUTED SYSTEM!";
             public static string READY_FOR_WORK = "HELLO. READY FOR DISTRIBUTED SYSTEM!";
         }
+
+        public class Node
+        {
+            public bool bInUse { get; set; }
+            public string sIPAddress { get; set; }
+            public int nCores { get; set; }
+            public int nProcessorsPhysical { get; set; }
+            public int nProcessorsLogical { get; set; }
+            public int nThreads { get; set; }
+        }
     }
 }

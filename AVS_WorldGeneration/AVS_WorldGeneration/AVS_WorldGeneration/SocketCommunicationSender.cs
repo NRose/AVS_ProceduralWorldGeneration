@@ -21,7 +21,7 @@ namespace AVS_WorldGeneration
         private IPAddress m_cDestIPAddress;
         private EndPoint m_cClientEndpoint;
         private SocketAsyncEventArgs m_cArgs;
-        private List<string> m_asReceivedItems = new List<string>();
+        private List<Helper.Node> m_acReceivedItems = new List<Helper.Node>();
 
         public SocketCommunicationSender(IPAddress cIPAddress, int nPort, int nReceiveBufferLength)
         {
@@ -53,11 +53,10 @@ namespace AVS_WorldGeneration
             
             Thread.Sleep(10000);
 
-            foreach (string sItem in m_asReceivedItems)
-            {
-                (Application.Current.MainWindow as MainWindow).AddNodeToList(sItem);
-            }
-            
+            (Application.Current.MainWindow as MainWindow).acAvailableNodes = new List<Helper.Node>(m_acReceivedItems);
+            (Application.Current.MainWindow as MainWindow).UpdateNodeList();
+            (Application.Current.MainWindow as MainWindow).btnConntectToNodes.IsEnabled = true;
+
             return m_cSocket;
         }
 
@@ -71,7 +70,7 @@ namespace AVS_WorldGeneration
 
             if (System.Text.ASCIIEncoding.Unicode.GetString(cArgs.Buffer).Contains(Helper.SocketCommunicationProtocol.READY_FOR_WORK))
             {
-                m_asReceivedItems.Add(((IPEndPoint)cArgs.RemoteEndPoint).Address.ToString() + ":" + ((IPEndPoint)cArgs.RemoteEndPoint).Port.ToString());
+                m_acReceivedItems.Add(new Helper.Node() { bInUse = true, sIPAddress = (((IPEndPoint)cArgs.RemoteEndPoint).Address.ToString() + ":" + ((IPEndPoint)cArgs.RemoteEndPoint).Port.ToString()), nCores = 0, nProcessorsPhysical = 0, nProcessorsLogical = 0, nThreads = 0 });
             }
         }
     }

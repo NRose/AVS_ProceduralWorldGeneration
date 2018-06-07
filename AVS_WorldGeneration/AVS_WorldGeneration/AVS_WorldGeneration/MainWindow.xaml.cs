@@ -80,11 +80,12 @@ namespace AVS_WorldGeneration
 
         #region VARIABLES - Network Distribution
 
-        private Object cObjThreadLocking = new Object();
-        private Object cObjProgressbarLocking = new Object();
+        private Object m_cObjThreadLocking = new Object();
+        private Object m_cObjProgressbarLocking = new Object();
 
         private NetworkManager m_cNetworkManager;
-
+        public List<Helper.Node> acAvailableNodes;
+        
         #endregion
 
         #region General Main Window
@@ -136,6 +137,7 @@ namespace AVS_WorldGeneration
             tllbSystemInfo.Content = "Number of physical processors:\t" + m_nPhysicalProcessors.ToString() + "\nNumber of cores:\t\t\t" + m_nCores.ToString() + "\nNumber of logical processors:\t" + m_nLogicalProcessors.ToString() + "\nNumber of threads in use:\t\t" + m_nThreadsInUse.ToString();
 
             m_cNetworkManager = new NetworkManager();
+            acAvailableNodes = new List<Helper.Node>();
         }
 
         private void DefineLights()
@@ -505,10 +507,44 @@ namespace AVS_WorldGeneration
             lbxNodes.Items.Clear();
             m_cNetworkManager.InitializeNetworkManager();
         }
-
-        public void AddNodeToList(string sIP)
+        
+        public void TglNode_Click(object sender, RoutedEventArgs e)
         {
-            lbxNodes.Items.Add(sIP);
+            System.Windows.Controls.CheckBox cbxCheck = (sender as System.Windows.Controls.CheckBox);
+
+            acAvailableNodes.Find(o => o.sIPAddress == cbxCheck.Tag.ToString()).bInUse = (bool)cbxCheck.IsChecked;
+            UpdateNodeList();
+        }
+
+        public void PlusNode_Click(object sender, RoutedEventArgs e)
+        {
+            System.Windows.Controls.Button btnPlus = (sender as System.Windows.Controls.Button);
+
+            acAvailableNodes.Find(o => o.sIPAddress == btnPlus.Tag.ToString()).nThreads += 1;
+            if (acAvailableNodes.Find(o => o.sIPAddress == btnPlus.Tag.ToString()).nThreads > 99)
+            {
+                acAvailableNodes.Find(o => o.sIPAddress == btnPlus.Tag.ToString()).nThreads = 99;
+            }
+            UpdateNodeList();
+        }
+
+        public void MinusNode_Click(object sender, RoutedEventArgs e)
+        {
+            System.Windows.Controls.Button btnMinus = (sender as System.Windows.Controls.Button);
+
+            acAvailableNodes.Find(o => o.sIPAddress == btnMinus.Tag.ToString()).nThreads -= 1;
+            if(acAvailableNodes.Find(o => o.sIPAddress == btnMinus.Tag.ToString()).nThreads < 0)
+            {
+                acAvailableNodes.Find(o => o.sIPAddress == btnMinus.Tag.ToString()).nThreads = 0;
+            }
+            UpdateNodeList();
+        }
+
+        public void UpdateNodeList()
+        {
+            lbxNodes.ItemsSource = null;
+            lbxNodes.Items.Clear();
+            lbxNodes.ItemsSource = acAvailableNodes;
         }
 
         private void GenerateVoronoiThread(object sender, DoWorkEventArgs e)
@@ -530,10 +566,10 @@ namespace AVS_WorldGeneration
             {
                 m_dVector = new double[] { m_kRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum, m_kRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum };
                 acTempList.Add(new BenTools.Mathematics.Vector(m_dVector));
-                    pbGenerateVoronoi.Dispatcher.Invoke(updatePB, System.Windows.Threading.DispatcherPriority.Background, new object[] { dOneStep });
+                pbGenerateVoronoi.Dispatcher.Invoke(updatePB, System.Windows.Threading.DispatcherPriority.Background, new object[] { dOneStep });
             }
 
-            lock(cObjThreadLocking)
+            lock(m_cObjThreadLocking)
             {
                 m_acVectors.Add(acTempList);
             }
