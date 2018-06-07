@@ -46,7 +46,7 @@ namespace ServiceCallerApplication
                     IVoronoiGenerationService wcfClient = myChannelFactory.CreateChannel();
 
                     List<double[]> vectors = wcfClient.RandomiseVectors(data).Vectors;
-                    result.Concat(vectors);
+                    result.AddRange(vectors);
                     ((IClientChannel)wcfClient).Close();
                 }
                 catch (EndpointNotFoundException e)
