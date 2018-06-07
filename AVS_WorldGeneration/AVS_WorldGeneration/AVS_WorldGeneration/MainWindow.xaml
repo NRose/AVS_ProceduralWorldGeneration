@@ -90,6 +90,7 @@
                            Header="Search for nodes"
                            Icon="./Resources/Search.png"
                            LargeIcon="./Resources/Search.png"
+                           Click="BtnSearchForNodes_Click"
                            Width="80"/>
                     <Fluent:Button Name="btnConntectToNodes" 
                            Header="Create network"

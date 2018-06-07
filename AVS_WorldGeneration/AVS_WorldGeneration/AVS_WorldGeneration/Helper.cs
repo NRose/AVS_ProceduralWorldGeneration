@@ -153,5 +153,10 @@ namespace AVS_WorldGeneration
             return Math.Exp(-dR2) * Math.Sin(dTwoPI * dR) * Math.Cos(3 * dTheta);
         }
 
+        public struct SocketCommunicationProtocol
+        {
+            public static string SEARCH_FOR_NODES = "HELLO. SEARCHING FOR DISTRIBUTED SYSTEM!";
+            public static string READY_FOR_WORK = "HELLO. READY FOR DISTRIBUTED SYSTEM!";
+        }
     }
 }

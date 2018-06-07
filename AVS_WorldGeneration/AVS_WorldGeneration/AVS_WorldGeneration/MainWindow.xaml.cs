@@ -83,6 +83,8 @@ namespace AVS_WorldGeneration
         private Object cObjThreadLocking = new Object();
         private Object cObjProgressbarLocking = new Object();
 
+        private NetworkManager m_cNetworkManager;
+
         #endregion
 
         #region General Main Window
@@ -132,6 +134,8 @@ namespace AVS_WorldGeneration
                 }
             }
             tllbSystemInfo.Content = "Number of physical processors:\t" + m_nPhysicalProcessors.ToString() + "\nNumber of cores:\t\t\t" + m_nCores.ToString() + "\nNumber of logical processors:\t" + m_nLogicalProcessors.ToString() + "\nNumber of threads in use:\t\t" + m_nThreadsInUse.ToString();
+
+            m_cNetworkManager = new NetworkManager();
         }
 
         private void DefineLights()
@@ -494,6 +498,17 @@ namespace AVS_WorldGeneration
             {
                 tllbSystemInfo.Content = "Number of physical processors:\t" + m_nPhysicalProcessors.ToString() + "\nNumber of cores:\t\t\t" + m_nCores.ToString() + "\nNumber of logical processors:\t" + m_nLogicalProcessors.ToString() + "\nNumber of threads in use:\t\t" + m_nThreadsInUse.ToString();
             }
+        }
+
+        private void BtnSearchForNodes_Click(object sender, RoutedEventArgs e)
+        {
+            lbxNodes.Items.Clear();
+            m_cNetworkManager.InitializeNetworkManager();
+        }
+
+        public void AddNodeToList(string sIP)
+        {
+            lbxNodes.Items.Add(sIP);
         }
 
         private void GenerateVoronoiThread(object sender, DoWorkEventArgs e)
