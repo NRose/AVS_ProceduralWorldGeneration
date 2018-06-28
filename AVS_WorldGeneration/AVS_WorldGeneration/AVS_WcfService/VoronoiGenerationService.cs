@@ -47,6 +47,7 @@ namespace AVS_WorldGeneration.WcfCommunication
             list.Vectors = vectors;
             return list;
         }
+        /*
         public static void Configure(ServiceConfiguration config)
         {
             //    ServiceEndpoint se = new ServiceEndpoint(new ContractDescription("IVoronoiGenerationService"), new BasicHttpBinding(), new EndpointAddress("http://localhost:8733/VoronoiGenerationService"));
@@ -57,5 +58,6 @@ namespace AVS_WorldGeneration.WcfCommunication
             //    config.Description.Behaviors.Add(new ServiceDebugBehavior { IncludeExceptionDetailInFaults = true });
             config.LoadFromConfiguration(ConfigurationManager.OpenMappedExeConfiguration(new ExeConfigurationFileMap { ExeConfigFilename = @"D:\Documents\Studium\AVS\AVS_ProceduralWorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\AVS_WcfService\App.config" }, ConfigurationUserLevel.None));
         }
+        */
     }
 }
