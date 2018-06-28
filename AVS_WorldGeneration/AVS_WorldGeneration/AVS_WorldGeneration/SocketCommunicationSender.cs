@@ -24,9 +24,16 @@ namespace AVS_WorldGeneration
         private EndPoint m_cClientEndpoint;
         private SocketAsyncEventArgs m_cArgs;
         private List<Helper.Node> m_acReceivedItems = new List<Helper.Node>();
+        private bool m_bSocketClosed = false;
 
         public SocketCommunicationSender(IPAddress cIPAddress, int nPort, int nReceiveBufferLength)
         {
+            if(m_bSocketClosed)
+            {
+                m_cSocket.Close();
+            }
+            m_bSocketClosed = false;
+
             m_cDestIPAddress = cIPAddress;
             m_nDestPort = nPort;
             m_nReceiveBufferLength = nReceiveBufferLength;
@@ -40,10 +47,11 @@ namespace AVS_WorldGeneration
             m_cSocket.Bind(m_cClientEndpoint);
 
         }
+
         public Socket Send()
         {
             byte[] abSendContent = new byte[m_nReceiveBufferLength];
-            abSendContent = System.Text.ASCIIEncoding.Unicode.GetBytes(Helper.SocketCommunicationProtocol.SEARCH_FOR_NODES);
+            abSendContent[0] = Helper.SocketCommunicationProtocol.SEARCH_FOR_NODES;
 
             m_cArgs = new SocketAsyncEventArgs();
             m_cArgs.RemoteEndPoint = m_cClientEndpoint;
@@ -52,18 +60,33 @@ namespace AVS_WorldGeneration
             
             m_cSocket.ReceiveMessageFromAsync(m_cArgs);
             m_cSocket.SendTo(abSendContent, m_cServerEndpoint);
-            
-            Thread.Sleep(10000);
 
-            (Application.Current.MainWindow as MainWindow).acAvailableNodes = new List<Helper.Node>(m_acReceivedItems);
-            (Application.Current.MainWindow as MainWindow).UpdateNodeList();
-            (Application.Current.MainWindow as MainWindow).btnConntectToNodes.IsEnabled = true;
+            WaitForServices();
 
             return m_cSocket;
         }
 
+        private async void WaitForServices()
+        {
+            for (int nProgress = 0; nProgress < 1000; nProgress++)
+            {
+                await Task.Delay(10);
+                (Application.Current.MainWindow as MainWindow).pbSearchForNodes.Value += 0.1f;
+            }
+            m_bSocketClosed = true;
+            (Application.Current.MainWindow as MainWindow).acAvailableNodes = new List<Helper.Node>(m_acReceivedItems);
+            (Application.Current.MainWindow as MainWindow).UpdateNodeList();
+            (Application.Current.MainWindow as MainWindow).btnConntectToNodes.IsEnabled = true;
+        }
+
         private void Args_Completed(object cSender, SocketAsyncEventArgs cArgs)
         {
+            if(m_bSocketClosed)
+            {
+                m_cSocket.Close();
+                m_bSocketClosed = false;
+                return;
+            }
             m_cArgs = new SocketAsyncEventArgs();
             m_cArgs.RemoteEndPoint = m_cClientEndpoint;
             m_cArgs.SetBuffer(m_abReceiveBuffer, 0, m_nReceiveBufferLength);

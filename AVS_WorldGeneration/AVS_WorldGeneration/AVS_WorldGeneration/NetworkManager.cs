@@ -17,18 +17,17 @@ namespace AVS_WorldGeneration
         {
             IPAddress cIPAddress = IPHelper.GetLocalIPAddress();
             IPAddress cSubnetMask = IPHelper.GetLocalSubmask();
-
-            string sQuery = "HELLO. SEARCHING FOR DISTRIBUTED SYSTEM!";
+            
             int nLength = 1024;
             byte[] abContent = new byte[nLength];
-            abContent = System.Text.ASCIIEncoding.Unicode.GetBytes(sQuery);
+            abContent[0] = Helper.SocketCommunicationProtocol.SEARCH_FOR_NODES;
 
             IPAddress cBroadcast = IPHelper.GetBroadcastAddress(cIPAddress, cSubnetMask);
 
             try
             {
                 SocketCommunicationSender cServerSocket = new SocketCommunicationSender(cBroadcast, 7345, 1024);
-                Socket cSocket = cServerSocket.Send();
+                Socket m_cUDPSocket = cServerSocket.Send();
             }
             finally
             {

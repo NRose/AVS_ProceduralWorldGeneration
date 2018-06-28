@@ -504,7 +504,7 @@ namespace AVS_WorldGeneration
 
         private void BtnSearchForNodes_Click(object sender, RoutedEventArgs e)
         {
-            lbxNodes.Items.Clear();
+            lbxNodes.ItemsSource = null;
             m_cNetworkManager.InitializeNetworkManager();
         }
         
