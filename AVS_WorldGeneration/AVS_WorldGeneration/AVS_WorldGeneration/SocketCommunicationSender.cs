@@ -43,7 +43,7 @@ namespace AVS_WorldGeneration
         public Socket Send()
         {
             byte[] abSendContent = new byte[m_nReceiveBufferLength];
-            abSendContent = System.Text.ASCIIEncoding.Unicode.GetBytes(Helper.SocketCommunicationProtocol.SEARCH_FOR_NODES);
+            abSendContent[0] = Helper.SocketCommunicationProtocol.SEARCH_FOR_NODES;
 
             m_cArgs = new SocketAsyncEventArgs();
             m_cArgs.RemoteEndPoint = m_cClientEndpoint;
