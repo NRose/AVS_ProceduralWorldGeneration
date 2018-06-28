@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.ServiceModel;
+using System.ServiceModel.Description;
 using System.Text;
 
 namespace AVS_WorldGeneration.WcfCommunication
@@ -26,7 +28,7 @@ namespace AVS_WorldGeneration.WcfCommunication
         [DataMember]
         public List<double[]> Vectors { get; set; }
     }
-
+    
         [ServiceContract]
     public interface IVoronoiGenerationService
     {
@@ -36,6 +38,7 @@ namespace AVS_WorldGeneration.WcfCommunication
 
     public class VoronoiGenerationService : IVoronoiGenerationService
     {
+
         public VectorList RandomiseVectors(VoronoiData data)
         {
             List<double[]> vectors = new List<double[]>();
@@ -43,6 +46,16 @@ namespace AVS_WorldGeneration.WcfCommunication
             VectorList list = new VectorList();
             list.Vectors = vectors;
             return list;
+        }
+        public static void Configure(ServiceConfiguration config)
+        {
+            //    ServiceEndpoint se = new ServiceEndpoint(new ContractDescription("IVoronoiGenerationService"), new BasicHttpBinding(), new EndpointAddress("http://localhost:8733/VoronoiGenerationService"));
+            //se.Behaviors.Add(new MyEndpointBehavior());
+            //config.AddServiceEndpoint(se);
+            //    config.Description.Endpoints.Add(se);
+            //    config.Description.Behaviors.Add(new ServiceMetadataBehavior { HttpGetEnabled = true });
+            //    config.Description.Behaviors.Add(new ServiceDebugBehavior { IncludeExceptionDetailInFaults = true });
+            config.LoadFromConfiguration(ConfigurationManager.OpenMappedExeConfiguration(new ExeConfigurationFileMap { ExeConfigFilename = @"D:\Documents\Studium\AVS\AVS_ProceduralWorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\AVS_WcfService\App.config" }, ConfigurationUserLevel.None));
         }
     }
 }

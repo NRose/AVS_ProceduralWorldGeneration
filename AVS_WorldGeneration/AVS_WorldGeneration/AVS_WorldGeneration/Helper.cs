@@ -153,10 +153,11 @@ namespace AVS_WorldGeneration
             return Math.Exp(-dR2) * Math.Sin(dTwoPI * dR) * Math.Cos(3 * dTheta);
         }
 
-        public struct SocketCommunicationProtocol
+        public static class SocketCommunicationProtocol
         {
-            public static string SEARCH_FOR_NODES = "HELLO. SEARCHING FOR DISTRIBUTED SYSTEM!";
-            public static string READY_FOR_WORK = "HELLO. READY FOR DISTRIBUTED SYSTEM!";
+            public static byte SEARCH_FOR_NODES = 0b1010_0101;
+            public static byte READY_FOR_WORK = 0b0100_0001;
+            public static byte START_WCF_SERVICE = 0b1110_0111;
         }
 
         public class Node
@@ -168,5 +169,12 @@ namespace AVS_WorldGeneration
             public int nProcessorsLogical { get; set; }
             public int nThreads { get; set; }
         }
-    }
+
+        public struct NodeInfos
+        {
+            public byte bCores { get; set; }
+            public byte bProcessorsPhysical { get; set; }
+            public byte bProcessorsLogical { get; set; }
+        }
+}
 }

@@ -13,9 +13,11 @@ namespace TestClientServer
         static void Main(string[] args)
         {
             SocketCommunicationListener serverSocket = new SocketCommunicationListener(7345,1024);
+
             while (true) {
                 serverSocket.Listen();
             }
+            
 
         }
     }

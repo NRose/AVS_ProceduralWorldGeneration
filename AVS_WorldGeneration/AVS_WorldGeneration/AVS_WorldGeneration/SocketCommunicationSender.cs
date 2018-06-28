@@ -7,6 +7,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Runtime.InteropServices;
+using static AVS_WorldGeneration.Helper;
 
 namespace AVS_WorldGeneration
 {
@@ -68,10 +70,32 @@ namespace AVS_WorldGeneration
             m_cArgs.Completed += Args_Completed;
             m_cSocket.ReceiveMessageFromAsync(m_cArgs);
 
-            if (System.Text.ASCIIEncoding.Unicode.GetString(cArgs.Buffer).Contains(Helper.SocketCommunicationProtocol.READY_FOR_WORK))
+            byte bHeaderProtocol;
+            NodeInfos nodeInfos = new Helper.NodeInfos();
+
+            ByteArrayToStructure(cArgs.Buffer, ref nodeInfos, out bHeaderProtocol);
+
+            if (bHeaderProtocol == SocketCommunicationProtocol.READY_FOR_WORK)
             {
-                m_acReceivedItems.Add(new Helper.Node() { bInUse = true, sIPAddress = (((IPEndPoint)cArgs.RemoteEndPoint).Address.ToString() + ":" + ((IPEndPoint)cArgs.RemoteEndPoint).Port.ToString()), nCores = 0, nProcessorsPhysical = 0, nProcessorsLogical = 0, nThreads = 0 });
+                m_acReceivedItems.Add(new Helper.Node() { bInUse = true, sIPAddress = (((IPEndPoint)cArgs.RemoteEndPoint).Address.ToString() + ":" + ((IPEndPoint)cArgs.RemoteEndPoint).Port.ToString()), nCores = nodeInfos.bCores, nProcessorsPhysical = nodeInfos.bProcessorsPhysical, nProcessorsLogical = nodeInfos.bProcessorsLogical, nThreads = nodeInfos.bCores });
             }
         }
+
+        private void ByteArrayToStructure(byte[] bytearray, ref NodeInfos obj, out byte protocol)
+        {
+            protocol = bytearray[0];
+
+            Int32 nlen = BitConverter.ToInt32(bytearray, 1);
+
+            IntPtr i = Marshal.AllocHGlobal(nlen);
+
+            Marshal.Copy(bytearray, 5, i, nlen);
+
+            obj = (NodeInfos)Marshal.PtrToStructure(i, obj.GetType());
+
+            Marshal.FreeHGlobal(i);
+
+        }
+
     }
 }
