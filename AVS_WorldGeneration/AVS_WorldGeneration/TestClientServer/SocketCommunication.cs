@@ -16,9 +16,9 @@ namespace TestClientServer
 {
     public static class SocketCommunicationProtocol
     {
-        public static byte SEARCH_FOR_NODES = 0b1010_0101;
-        public static byte READY_FOR_WORK = 0b0100_0001;
-        public static byte START_WCF_SERVICE = 0b1110_0111;
+        public static byte SEARCH_FOR_NODES = 127;
+        public static byte READY_FOR_WORK = 93;
+        public static byte START_WCF_SERVICE = 101;
     }
     public class SocketCommunicationListener
     {
