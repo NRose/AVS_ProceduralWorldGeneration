@@ -31,6 +31,8 @@ namespace AVS_NodeCommunication
         
         private EndPoint m_cRemoteEndpoint;
 
+        private ServiceHost m_cServiceHost;
+
         public SocketCommunicationListener(int port, int receiveBufferLength)
         {
             this.port = port;
@@ -46,8 +48,11 @@ namespace AVS_NodeCommunication
             m_cRemoteEndpoint = new IPEndPoint(((IPEndPoint)serverEndpoint).Address, ((IPEndPoint)serverEndpoint).Port);
         }
 
+        private EventLog m_cEvent;
+
         public void Listen(EventLog cEvent)
         {
+            m_cEvent = cEvent;
             cEvent.WriteEntry("Defined");
             //socket.ReceiveTimeout = 500;
 
@@ -68,13 +73,11 @@ namespace AVS_NodeCommunication
             {
                 if (receiveBuffer[0] == SocketCommunicationProtocol.SEARCH_FOR_NODES)
                 {
-                    showInformation(((IPEndPoint)e.RemoteEndPoint).Address, ((IPEndPoint)e.RemoteEndPoint).Port);
                     SendAnswer(((IPEndPoint)e.RemoteEndPoint).Address, ((IPEndPoint)e.RemoteEndPoint).Port);
                 }
                 else if (receiveBuffer[0] == SocketCommunicationProtocol.START_WCF_SERVICE)
                 {
-                    showInformation(((IPEndPoint)e.RemoteEndPoint).Address, ((IPEndPoint)e.RemoteEndPoint).Port);
-                    startWcfService();
+                    StartWcfService();
                 }
             }
 
@@ -87,19 +90,15 @@ namespace AVS_NodeCommunication
             socket.ReceiveMessageFromAsync(cArgs);
         }
 
-        public void startWcfService()
+        public void StartWcfService()
         {
-            // Start WCF Service
-            string address = "http://localhost:8733/VoronoiGenerationService";
-            Uri uri = new Uri("http://localhost:8733/VoronoiGenerationService");
-
-            using (ServiceHost host = new ServiceHost(typeof(VoronoiGenerationService), uri))
+            if(m_cServiceHost == null)
             {
-               // host.AddServiceEndpoint(typeof(IVoronoiGenerationService), new BasicHttpBinding(), address);
-                host.Open();
-
-                Console.WriteLine("Service Started");
-                Console.ReadLine();
+                m_cEvent.WriteEntry("Start WCF Service");
+                m_cServiceHost = new ServiceHost(typeof(VoronoiGenerationService));
+                m_cEvent.WriteEntry("Created ServiceHost for WCF Service");
+                m_cServiceHost.Open();
+                m_cEvent.WriteEntry("Opened WCF Service");
             }
         }
 
@@ -112,7 +111,7 @@ namespace AVS_NodeCommunication
             byte[] nodeByte = StructureToByteArray(node,SocketCommunicationProtocol.READY_FOR_WORK);
             
             socket.SendTo(nodeByte, destinationendpoint);
-            Console.WriteLine("Answer: READY_FOR_WORK + NodeInfos");
+            //Console.WriteLine("Answer: READY_FOR_WORK + NodeInfos");
         }
 
         private NodeInfos ReadNodeInfos()
@@ -131,13 +130,7 @@ namespace AVS_NodeCommunication
 
             return node;
         }
-
-        private void showInformation(IPAddress ipAddress, int port)
-        {
-            Console.WriteLine("Information of client:");
-            Console.WriteLine("IP-Adresse ist: " + ipAddress + ":" + port);
-        }
-
+        
         private byte[] StructureToByteArray(object obj, byte protocol)
         {
             Int32 nlen = Marshal.SizeOf(obj);

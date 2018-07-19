@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media.Media3D;
@@ -175,6 +176,12 @@ namespace AVS_WorldGeneration
             public byte bCores { get; set; }
             public byte bProcessorsPhysical { get; set; }
             public byte bProcessorsLogical { get; set; }
+        }
+
+        public struct Distributor
+        {
+            public IPAddress cAddress;
+            public int nCores;
         }
 }
 }

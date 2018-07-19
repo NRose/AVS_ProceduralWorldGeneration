@@ -26,13 +26,21 @@ namespace AVS_WorldGeneration
         private List<Helper.Node> m_acReceivedItems = new List<Helper.Node>();
         private bool m_bSocketClosed = false;
 
-        public SocketCommunicationSender(IPAddress cIPAddress, int nPort, int nReceiveBufferLength)
+        public SocketCommunicationSender(IPAddress cIPAddress, int nPort, int nReceiveBufferLength, bool bCloseOldOne = false)
         {
             if(m_bSocketClosed)
             {
                 m_cSocket.Close();
             }
             m_bSocketClosed = false;
+
+            if(bCloseOldOne)
+            {
+                if(m_cSocket != null)
+                {
+                    m_cSocket.Close();
+                }
+            }
 
             m_cDestIPAddress = cIPAddress;
             m_nDestPort = nPort;
@@ -43,25 +51,31 @@ namespace AVS_WorldGeneration
             m_cClientEndpoint = new IPEndPoint(IPHelper.GetLocalIPAddress(), m_nSourcePort);
 
             m_cSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            m_cSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, 1);
+            m_cSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);
             m_cSocket.Bind(m_cClientEndpoint);
 
         }
 
-        public Socket Send()
+        public Socket Send(byte bCommand, bool bWaitForAnswer = true)
         {
             byte[] abSendContent = new byte[m_nReceiveBufferLength];
-            abSendContent[0] = Helper.SocketCommunicationProtocol.SEARCH_FOR_NODES;
+            abSendContent[0] = bCommand;
 
             m_cArgs = new SocketAsyncEventArgs();
             m_cArgs.RemoteEndPoint = m_cClientEndpoint;
             m_cArgs.SetBuffer(m_abReceiveBuffer, 0, m_nReceiveBufferLength);
-            m_cArgs.Completed += Args_Completed;
+            if (bWaitForAnswer)
+            {
+                m_cArgs.Completed += Args_Completed;
+                m_cSocket.ReceiveMessageFromAsync(m_cArgs);
+            }
             
-            m_cSocket.ReceiveMessageFromAsync(m_cArgs);
             m_cSocket.SendTo(abSendContent, m_cServerEndpoint);
 
-            WaitForServices();
+            if (bWaitForAnswer)
+            {
+                WaitForServices();
+            }
 
             return m_cSocket;
         }

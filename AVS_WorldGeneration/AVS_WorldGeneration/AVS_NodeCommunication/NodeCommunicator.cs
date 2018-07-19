@@ -41,6 +41,10 @@ namespace AVS_NodeCommunication
             m_cServerSocket = new SocketCommunicationListener(7345, 1024);
             eventLog1.WriteEntry("SocketCommunicationListener created");
             m_cServerSocket.Listen(eventLog1);
+            /*
+            serviceHost = new ServiceHost(typeof(VoronoiGenerationService));
+            serviceHost.Open();
+            */
             eventLog1.WriteEntry("OnStart finished");
         }
         

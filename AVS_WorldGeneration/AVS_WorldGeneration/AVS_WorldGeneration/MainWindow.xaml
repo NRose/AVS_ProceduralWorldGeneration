@@ -97,6 +97,7 @@
                            Icon="./Resources/Distribute.png"
                            LargeIcon="./Resources/Distribute.png"
                            IsEnabled="False"
+                           Click="BtnCreateDistributionNetwork_Click"
                            Width="80"/>
                     <ListView x:Name="lbxNodes" Height="60" Width="700">
                         <ListView.ItemTemplate>

@@ -42,7 +42,7 @@ namespace AVS_WorldGeneration.WcfCommunication
         public VectorList RandomiseVectors(VoronoiData data)
         {
             List<double[]> vectors = new List<double[]>();
-            vectors.Add(new double[] { 1.0, 2.0 });
+            vectors.Add(new double[] { 13.0, 2.0 });
             VectorList list = new VectorList();
             list.Vectors = vectors;
             return list;
