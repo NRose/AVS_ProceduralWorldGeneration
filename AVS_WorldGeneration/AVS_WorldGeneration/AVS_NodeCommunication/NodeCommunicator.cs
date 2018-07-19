@@ -16,12 +16,8 @@ namespace AVS_NodeCommunication
     partial class NodeCommunicator : ServiceBase
     {
         public ServiceHost serviceHost = null;
-        
         private SocketCommunicationListener m_cServerSocket;
-
-        private ManualResetEvent m_cReset = new ManualResetEvent(false);
-        private Thread m_cWorker;
-
+        
         public NodeCommunicator()
         {
             InitializeComponent();
@@ -34,19 +30,6 @@ namespace AVS_NodeCommunication
 
             eventLog1.WriteEntry("Log created - constructor done!");
         }
-
-        private void ListenForCommand()
-        {
-            eventLog1.WriteEntry("Listening . . .");
-            while (!m_cReset.WaitOne(0))
-            {
-                eventLog1.WriteEntry("While Start");
-                m_cServerSocket.Listen(eventLog1);
-                eventLog1.WriteEntry("While Continue");
-                Thread.Sleep(1000);
-                eventLog1.WriteEntry("While End");
-            }
-        }
         
         protected override void OnStart(string[] args)
         {
@@ -58,16 +41,6 @@ namespace AVS_NodeCommunication
             m_cServerSocket = new SocketCommunicationListener(7345, 1024);
             eventLog1.WriteEntry("SocketCommunicationListener created");
             m_cServerSocket.Listen(eventLog1);
-            /*
-            serviceHost = new ServiceHost(typeof(VoronoiGenerationService));
-            serviceHost.Open();
-            eventLog1.WriteEntry("ServiceHost created");
-            
-            m_cWorker = new Thread(ListenForCommand);
-            m_cWorker.Name = "AVS_PortListener";
-            m_cWorker.IsBackground = true;
-            m_cWorker.Start();
-            */
             eventLog1.WriteEntry("OnStart finished");
         }
         
@@ -79,13 +52,7 @@ namespace AVS_NodeCommunication
 
         protected override void OnStop()
         {
-            eventLog1.WriteEntry("OnStop called");
-            m_cReset.Set();
-            if(!m_cWorker.Join(3000))
-            {
-                m_cWorker.Abort();
-            }
-            eventLog1.WriteEntry("OnStop finished");
+            eventLog1.WriteEntry("OnStop");
         }
 
     }
