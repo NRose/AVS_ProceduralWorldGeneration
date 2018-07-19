@@ -37,11 +37,14 @@ namespace AVS_NodeCommunication
 
         private void ListenForCommand()
         {
+            eventLog1.WriteEntry("Listening . . .");
             while (!m_cReset.WaitOne(0))
             {
-                m_cServerSocket.Listen();
-                eventLog1.WriteEntry("Threading here! :)");
+                eventLog1.WriteEntry("While Start");
+                m_cServerSocket.Listen(eventLog1);
+                eventLog1.WriteEntry("While Continue");
                 Thread.Sleep(1000);
+                eventLog1.WriteEntry("While End");
             }
         }
         
@@ -54,19 +57,20 @@ namespace AVS_NodeCommunication
             }
             m_cServerSocket = new SocketCommunicationListener(7345, 1024);
             eventLog1.WriteEntry("SocketCommunicationListener created");
-
+            m_cServerSocket.Listen(eventLog1);
+            /*
             serviceHost = new ServiceHost(typeof(VoronoiGenerationService));
             serviceHost.Open();
             eventLog1.WriteEntry("ServiceHost created");
-
+            
             m_cWorker = new Thread(ListenForCommand);
             m_cWorker.Name = "AVS_PortListener";
             m_cWorker.IsBackground = true;
             m_cWorker.Start();
-
+            */
             eventLog1.WriteEntry("OnStart finished");
         }
-
+        
         protected override void OnContinue()
         {
             base.OnContinue();

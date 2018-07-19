@@ -28,6 +28,8 @@ namespace AVS_NodeCommunication
         private int port;
         private int receiveBufferLength;
         private EndPoint serverEndpoint;
+        
+        private EndPoint m_cRemoteEndpoint;
 
         public SocketCommunicationListener(int port, int receiveBufferLength)
         {
@@ -40,29 +42,49 @@ namespace AVS_NodeCommunication
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, 1);
             socket.Bind(serverEndpoint);
+            
+            m_cRemoteEndpoint = new IPEndPoint(((IPEndPoint)serverEndpoint).Address, ((IPEndPoint)serverEndpoint).Port);
         }
 
-        public void Listen()
+        public void Listen(EventLog cEvent)
         {
-            SocketFlags socketFlags = new SocketFlags();
-            IPPacketInformation ipPacketInformation;
-            EndPoint clientEndpoint = new IPEndPoint(((IPEndPoint)serverEndpoint).Address, ((IPEndPoint)serverEndpoint).Port);
-            socket.ReceiveTimeout = 5000;
-            socket.ReceiveMessageFrom(receiveBuffer, 0, receiveBufferLength, ref socketFlags, ref clientEndpoint, out ipPacketInformation);
+            cEvent.WriteEntry("Defined");
+            //socket.ReceiveTimeout = 500;
 
+            SocketAsyncEventArgs cArgs = new SocketAsyncEventArgs();
+            cArgs.SetBuffer(receiveBuffer, 0, receiveBufferLength);
+            cArgs.SocketFlags = new SocketFlags();
+            cArgs.RemoteEndPoint = m_cRemoteEndpoint;
+            cArgs.Completed += CArgs_Completed;
+            
+            socket.ReceiveMessageFromAsync(cArgs);
+            
+            cEvent.WriteEntry("Defined End");
+        }
+
+        private void CArgs_Completed(object sender, SocketAsyncEventArgs e)
+        {
             if (receiveBuffer.Length > 0)
             {
                 if (receiveBuffer[0] == SocketCommunicationProtocol.SEARCH_FOR_NODES)
                 {
-                    showInformation(((IPEndPoint)clientEndpoint).Address, ((IPEndPoint)clientEndpoint).Port);
-                    SendAnswer(((IPEndPoint)clientEndpoint).Address, ((IPEndPoint)clientEndpoint).Port);
+                    showInformation(((IPEndPoint)e.RemoteEndPoint).Address, ((IPEndPoint)e.RemoteEndPoint).Port);
+                    SendAnswer(((IPEndPoint)e.RemoteEndPoint).Address, ((IPEndPoint)e.RemoteEndPoint).Port);
                 }
                 else if (receiveBuffer[0] == SocketCommunicationProtocol.START_WCF_SERVICE)
                 {
-                    showInformation(((IPEndPoint)clientEndpoint).Address, ((IPEndPoint)clientEndpoint).Port);
+                    showInformation(((IPEndPoint)e.RemoteEndPoint).Address, ((IPEndPoint)e.RemoteEndPoint).Port);
                     startWcfService();
                 }
             }
+
+            SocketAsyncEventArgs cArgs = new SocketAsyncEventArgs();
+            cArgs.SetBuffer(receiveBuffer, 0, receiveBufferLength);
+            cArgs.SocketFlags = new SocketFlags();
+            cArgs.RemoteEndPoint = m_cRemoteEndpoint;
+            cArgs.Completed += CArgs_Completed;
+
+            socket.ReceiveMessageFromAsync(cArgs);
         }
 
         public void startWcfService()
