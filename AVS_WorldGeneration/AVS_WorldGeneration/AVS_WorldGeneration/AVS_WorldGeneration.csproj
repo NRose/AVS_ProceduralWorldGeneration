@@ -72,6 +72,11 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Service References\VoronoiWCFServiceReference\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.svcmap</DependentUpon>
+    </Compile>
     <Compile Include="ServiceCallHelper.cs" />
     <Compile Include="SocketCommunicationSender.cs" />
     <Compile Include="WcfServiceCallback.cs" />
@@ -109,10 +114,24 @@
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <None Include="Service References\VoronoiWCFServiceReference\Arrays.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Service References\VoronoiWCFServiceReference\AVS_WorldGeneration.WcfCommunication.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Service References\VoronoiWCFServiceReference\service.wsdl" />
+    <None Include="Service References\VoronoiWCFServiceReference\service.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Service References\VoronoiWCFServiceReference\service1.xsd">
+      <SubType>Designer</SubType>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -127,6 +146,12 @@
     <Resource Include="Resources\Export.png" />
     <Resource Include="Resources\Search.png" />
     <Resource Include="Resources\Cores.png" />
+    <None Include="Service References\VoronoiWCFServiceReference\configuration91.svcinfo" />
+    <None Include="Service References\VoronoiWCFServiceReference\configuration.svcinfo" />
+    <None Include="Service References\VoronoiWCFServiceReference\Reference.svcmap">
+      <Generator>WCF Proxy Generator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
     <Content Include="ThirdPartyLibraries\FortuneVoronoi.dll" />
   </ItemGroup>
   <ItemGroup>
@@ -137,6 +162,9 @@
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadataStorage Include="Service References\VoronoiWCFServiceReference\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
