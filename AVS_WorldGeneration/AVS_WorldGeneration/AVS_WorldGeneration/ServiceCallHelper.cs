@@ -39,17 +39,15 @@ namespace AVS_WorldGeneration
                 {
                     EndpointAddress cEPA = cEpAdresses[i];
                     VoronoiData cData = cVoronoiData[i];
-                    BasicHttpBinding bBinding = new BasicHttpBinding();
+                    WSDualHttpBinding bBinding = new WSDualHttpBinding();
 
                     try
                     {
-                        ChannelFactory<IVoronoiGenerationService> cChannelFactory = new ChannelFactory<IVoronoiGenerationService>(bBinding, cEPA);
+                        WcfServiceCallback cCallback = new WcfServiceCallback();
+                        InstanceContext cInstanceContext = new InstanceContext(cCallback);
 
-                        IVoronoiGenerationService cWcfClient = cChannelFactory.CreateChannel();
-
-                        List<double[]> cVectors = cWcfClient.RandomiseVectors(cData).Vectors;
-                        acResults.Add(cVectors);
-                        ((IClientChannel)cWcfClient).Close();
+                        var cWcfService = new VoronoiWCFServiceReference.VoronoiGenerationServiceClient(cInstanceContext, bBinding, cEPA);
+                        cWcfService.RandomiseVectors(cData);
                     }
                     catch (EndpointNotFoundException e)
                     {

@@ -22,7 +22,7 @@ namespace ServiceCallerApplication
             VoronoiData data = new VoronoiData
             {
                 Count = 1,
-                Progress = 22,
+                Threads = 22,
                 Minimum = 1,
                 Maximum = 10
             };

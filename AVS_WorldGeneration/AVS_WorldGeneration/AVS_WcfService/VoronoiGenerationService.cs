@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Configuration;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -15,7 +16,7 @@ namespace AVS_WorldGeneration.WcfCommunication
         [DataMember]
         public int Count { get; set; }
         [DataMember]
-        public float Progress { get; set; }
+        public int Threads { get; set; }
         [DataMember]
         public double Minimum { get; set; }
         [DataMember]
@@ -26,38 +27,86 @@ namespace AVS_WorldGeneration.WcfCommunication
     public class VectorList
     {
         [DataMember]
-        public List<double[]> Vectors { get; set; }
+        public List<List<double[]>> Vectors { get; set; }
     }
     
-        [ServiceContract]
+    public interface ICallbackContract
+    {
+        [OperationContract]
+        void OnGenerationFinished(List<List<double[]>> acVectors);
+    }
+
+    [ServiceContract(CallbackContract = typeof(ICallbackContract))] //Duplexvertrag
     public interface IVoronoiGenerationService
     {
         [OperationContract]
-        VectorList RandomiseVectors(VoronoiData data); //int nCount, float fProgress, double dMinimum, double dMaximum
+        void RandomiseVectors(VoronoiData data);
     }
 
+    [ServiceBehavior(ConcurrencyMode = ConcurrencyMode.Reentrant)]
     public class VoronoiGenerationService : IVoronoiGenerationService
     {
+        public static ICallbackContract cCallback;
 
-        public VectorList RandomiseVectors(VoronoiData data)
+        private int m_nThreadsInUse;
+        private double[] m_dVector;
+        private Random m_kRnd = new Random();
+        private double m_dMinimum = -1.0;
+        private double m_dMaximum = 1.0;
+        private Object m_cObjThreadLocking = new Object();
+        private int m_nVoronoiFinished_Threaded = 0;
+        private VectorList m_acVectors;
+        
+        public void RandomiseVectors(VoronoiData data)
         {
-            List<double[]> vectors = new List<double[]>();
-            vectors.Add(new double[] { 13.0, 2.0 });
-            VectorList list = new VectorList();
-            list.Vectors = vectors;
-            return list;
+            double dVoronoiCount_Threaded = data.Count / data.Threads;
+            double dExtra = data.Count % data.Threads;
+            m_nThreadsInUse = data.Threads;
+            m_dMinimum = data.Minimum;
+            m_dMaximum = data.Maximum;
+            m_acVectors = new VectorList();
+            cCallback = OperationContext.Current.GetCallbackChannel<ICallbackContract>();
+
+            for (int i = 0; i < data.Threads; i++)
+            {
+                BackgroundWorker cWorker = new BackgroundWorker
+                {
+                    WorkerReportsProgress = false,
+                    WorkerSupportsCancellation = false
+                };
+                cWorker.DoWork += GenerateVoronoiVectors;
+                cWorker.RunWorkerCompleted += GenerateVoronoiVectorsFinished;
+
+                cWorker.RunWorkerAsync(data.Count / data.Threads + dExtra);
+                dExtra = 0.0;
+            }
         }
-        /*
-        public static void Configure(ServiceConfiguration config)
+        
+        private void GenerateVoronoiVectors(object sender, DoWorkEventArgs e)
         {
-            //    ServiceEndpoint se = new ServiceEndpoint(new ContractDescription("IVoronoiGenerationService"), new BasicHttpBinding(), new EndpointAddress("http://localhost:8733/VoronoiGenerationService"));
-            //se.Behaviors.Add(new MyEndpointBehavior());
-            //config.AddServiceEndpoint(se);
-            //    config.Description.Endpoints.Add(se);
-            //    config.Description.Behaviors.Add(new ServiceMetadataBehavior { HttpGetEnabled = true });
-            //    config.Description.Behaviors.Add(new ServiceDebugBehavior { IncludeExceptionDetailInFaults = true });
-            config.LoadFromConfiguration(ConfigurationManager.OpenMappedExeConfiguration(new ExeConfigurationFileMap { ExeConfigFilename = @"D:\Documents\Studium\AVS\AVS_ProceduralWorldGeneration\AVS_WorldGeneration\AVS_WorldGeneration\AVS_WcfService\App.config" }, ConfigurationUserLevel.None));
+            double dOneStep = 100.0 / m_nThreadsInUse / (double)e.Argument;
+            List<double[]> acTempList = new List<double[]>();
+
+            for (int i = 0; i < (double)e.Argument; i++)
+            {
+                m_dVector = new double[] { m_kRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum, m_kRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum };
+                acTempList.Add(m_dVector);
+            }
+
+            lock (m_cObjThreadLocking)
+            {
+                m_acVectors.Vectors.Add(acTempList);
+            }
         }
-        */
+
+        private void GenerateVoronoiVectorsFinished(object sender, RunWorkerCompletedEventArgs e)
+        {
+            m_nVoronoiFinished_Threaded++;
+
+            if(m_nVoronoiFinished_Threaded >= m_nThreadsInUse)
+            {
+                cCallback.OnGenerationFinished(m_acVectors.Vectors);
+            }
+        }
     }
 }

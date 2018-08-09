@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ReferenceGroup xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ID="d67ad7b2-578a-49a0-9ca5-6d36a0f7cf97" xmlns="urn:schemas-microsoft-com:xml-wcfservicemap">
+  <ClientOptions>
+    <GenerateAsynchronousMethods>false</GenerateAsynchronousMethods>
+    <GenerateTaskBasedAsynchronousMethod>true</GenerateTaskBasedAsynchronousMethod>
+    <EnableDataBinding>true</EnableDataBinding>
+    <ExcludedTypes />
+    <ImportXmlTypes>false</ImportXmlTypes>
+    <GenerateInternalTypes>false</GenerateInternalTypes>
+    <GenerateMessageContracts>false</GenerateMessageContracts>
+    <NamespaceMappings />
+    <CollectionMappings />
+    <GenerateSerializableTypes>true</GenerateSerializableTypes>
+    <Serializer>Auto</Serializer>
+    <UseSerializerForFaults>true</UseSerializerForFaults>
+    <ReferenceAllAssemblies>true</ReferenceAllAssemblies>
+    <ReferencedAssemblies />
+    <ReferencedDataContractTypes />
+    <ServiceContractMappings />
+  </ClientOptions>
+  <MetadataSources>
+    <MetadataSource Address="http://localhost:8733/VoronoiGenerationService/mex" Protocol="mex" SourceId="1" />
+  </MetadataSources>
+  <Metadata>
+    <MetadataFile FileName="service.wsdl" MetadataType="Wsdl" ID="23d6d787-131d-4b92-9c1d-229bc28b872e" SourceId="1" SourceUrl="http://localhost:8733/VoronoiGenerationService/mex" />
+    <MetadataFile FileName="service.xsd" MetadataType="Schema" ID="f1c5cf6a-af55-4918-b67c-bd3cfba1239f" SourceId="1" SourceUrl="http://localhost:8733/VoronoiGenerationService/mex" />
+    <MetadataFile FileName="service1.xsd" MetadataType="Schema" ID="bdca6393-4a03-4063-b74d-7ad8a7e40cd8" SourceId="1" SourceUrl="http://localhost:8733/VoronoiGenerationService/mex" />
+    <MetadataFile FileName="AVS_WorldGeneration.WcfCommunication.xsd" MetadataType="Schema" ID="8581f3e0-9738-4af1-95ec-8626865067f9" SourceId="1" SourceUrl="http://localhost:8733/VoronoiGenerationService/mex" />
+    <MetadataFile FileName="Arrays.xsd" MetadataType="Schema" ID="162cabff-6184-45b9-9773-04b819ee30b7" SourceId="1" SourceUrl="http://localhost:8733/VoronoiGenerationService/mex" />
+  </Metadata>
+  <Extensions>
+    <ExtensionFile FileName="configuration91.svcinfo" Name="configuration91.svcinfo" />
+    <ExtensionFile FileName="configuration.svcinfo" Name="configuration.svcinfo" />
+  </Extensions>
+</ReferenceGroup>

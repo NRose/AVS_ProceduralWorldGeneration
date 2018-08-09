@@ -285,6 +285,7 @@ namespace AVS_WorldGeneration
                 List<WcfCommunication.VoronoiData> acData = new List<WcfCommunication.VoronoiData>();
 
                 int nSingleCount = Convert.ToInt32(dVoronoiCount / m_cNetworkManager.acDistributors.Count);
+                m_dProgressStepForNetworkDistribution = (double)nSingleCount;
 
                 foreach (Helper.Distributor cDist in m_cNetworkManager.acDistributors)
                 {
@@ -294,22 +295,13 @@ namespace AVS_WorldGeneration
 
                     cData.Minimum = m_dMinimum;
                     cData.Maximum = m_dMaximum;
-                    cData.Progress = 0.0f;
+                    cData.Threads = cDist.nCores;
                     cData.Count = nSingleCount;
 
                     acData.Add(cData);
                 }
                 ServiceCallHelper.RunDistribution(acAddresses, 8733, acData);
-
-                BackgroundWorker cWorkerMain = new BackgroundWorker
-                {
-                    WorkerReportsProgress = false,
-                    WorkerSupportsCancellation = false
-                };
-                cWorkerMain.DoWork += WaitForDistribution;
-
-                cWorkerMain.RunWorkerAsync(dVoronoiCount);
-                }
+            }
             else
             {
                 Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Start process: Generate World", LogLevel.INFO });
@@ -641,17 +633,18 @@ namespace AVS_WorldGeneration
             Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { sMessage, eLogLevel });
         }
 
-        private void WaitForDistribution(object sender, DoWorkEventArgs e)
+        private double m_dProgressStepForNetworkDistribution;
+
+        public void AddNetworkResult(List<BenTools.Mathematics.Vector> acResult)
         {
-            while(!ServiceCallHelper.bDistributionIsFinished)
+            VoronoiProgress updatePB = IncreaseProgress;
+            pbGenerateVoronoi.Dispatcher.Invoke(updatePB, System.Windows.Threading.DispatcherPriority.Background, new object[] { m_dProgressStepForNetworkDistribution });
+            lock (m_cObjThreadLocking)
             {
-                Thread.Sleep(500);
+                m_acVectors.Add(acResult);
             }
-
-            List<List<double[]>> acShit = ServiceCallHelper.acResults;
-            int i = 0;
         }
-
+        
         #endregion
 
         #region Log System

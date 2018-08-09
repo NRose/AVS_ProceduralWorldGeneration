@@ -183,5 +183,5 @@ namespace AVS_WorldGeneration
             public IPAddress cAddress;
             public int nCores;
         }
-}
+    }
 }
