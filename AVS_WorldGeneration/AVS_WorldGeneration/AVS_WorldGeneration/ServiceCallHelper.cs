@@ -46,7 +46,10 @@ namespace AVS_WorldGeneration
                         WcfServiceCallback cCallback = new WcfServiceCallback();
                         InstanceContext cInstanceContext = new InstanceContext(cCallback);
 
-                        var cWcfService = new VoronoiWCFServiceReference.VoronoiGenerationServiceClient(cInstanceContext, bBinding, cEPA);
+                        //var cWcfService = new VoronoiWCFServiceReference.VoronoiGenerationServiceClient(cInstanceContext, bBinding, cEPA);
+                        
+                        var cWcfServiceDuplexChannel = new DuplexChannelFactory<IVoronoiGenerationService>(cCallback, bBinding, cEPA);
+                        IVoronoiGenerationService cWcfService = cWcfServiceDuplexChannel.CreateChannel();
                         cWcfService.RandomiseVectors(cData);
                     }
                     catch (EndpointNotFoundException e)
