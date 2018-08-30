@@ -96,7 +96,7 @@ namespace AVS_WorldGeneration
         public MainWindow()
         {
             InitializeComponent();
-
+            
             m_nSeed = m_kRnd.Next();
             m_kRnd = new Random(m_nSeed);
             tbxSeed.Text = m_nSeed.ToString();

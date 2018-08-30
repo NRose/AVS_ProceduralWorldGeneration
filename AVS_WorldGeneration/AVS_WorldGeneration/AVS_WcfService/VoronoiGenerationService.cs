@@ -56,9 +56,22 @@ namespace AVS_WorldGeneration.WcfCommunication
         private Object m_cObjThreadLocking = new Object();
         private int m_nVoronoiFinished_Threaded = 0;
         private VectorList m_acVectors;
+
+        private System.Diagnostics.EventLog cEventLog;
         
         public void RandomiseVectors(VoronoiData data)
         {
+            if (!System.Diagnostics.EventLog.SourceExists("AVS_WPF_VoronoiService_Source"))
+            {
+                System.Diagnostics.EventLog.CreateEventSource("AVS_WPF_VoronoiService_Source", "AVS_WPF_VoronoiServiceLog");
+            }
+            cEventLog = new System.Diagnostics.EventLog("AVS_WPF_VoronoiServiceLog");
+
+            cEventLog.Source = "AVS_WPF_VoronoiService_Source";
+            cEventLog.Log = "AVS_WPF_VoronoiServiceLog";
+
+            cEventLog.WriteEntry("Log created - randomising vectors started!");
+
             double dVoronoiCount_Threaded = data.Count / data.Threads;
             double dExtra = data.Count % data.Threads;
             m_nThreadsInUse = data.Threads;
@@ -69,6 +82,7 @@ namespace AVS_WorldGeneration.WcfCommunication
 
             for (int i = 0; i < data.Threads; i++)
             {
+                cEventLog.WriteEntry("Worker (" + i.ToString() + "/" + data.Threads.ToString() + ") starting. . .");
                 BackgroundWorker cWorker = new BackgroundWorker
                 {
                     WorkerReportsProgress = false,
@@ -79,6 +93,7 @@ namespace AVS_WorldGeneration.WcfCommunication
 
                 cWorker.RunWorkerAsync(data.Count / data.Threads + dExtra);
                 dExtra = 0.0;
+                cEventLog.WriteEntry("Worker " + i.ToString() + " started!");
             }
         }
         
@@ -102,9 +117,11 @@ namespace AVS_WorldGeneration.WcfCommunication
         private void GenerateVoronoiVectorsFinished(object sender, RunWorkerCompletedEventArgs e)
         {
             m_nVoronoiFinished_Threaded++;
+            cEventLog.WriteEntry("Worker (" + m_nVoronoiFinished_Threaded.ToString() + "/" + m_nThreadsInUse.ToString() + " ended!");
 
-            if(m_nVoronoiFinished_Threaded >= m_nThreadsInUse)
+            if (m_nVoronoiFinished_Threaded >= m_nThreadsInUse)
             {
+                cEventLog.WriteEntry("WCF Calculation finished - Callback called!");
                 cCallback.OnGenerationFinished(m_acVectors.Vectors);
             }
         }
