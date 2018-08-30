@@ -61,11 +61,12 @@ namespace AVS_WorldGeneration.WcfCommunication
         
         public void RandomiseVectors(VoronoiData data)
         {
+            cEventLog = new System.Diagnostics.EventLog();
+
             if (!System.Diagnostics.EventLog.SourceExists("AVS_WPF_VoronoiService_Source"))
             {
                 System.Diagnostics.EventLog.CreateEventSource("AVS_WPF_VoronoiService_Source", "AVS_WPF_VoronoiServiceLog");
             }
-            cEventLog = new System.Diagnostics.EventLog("AVS_WPF_VoronoiServiceLog");
 
             cEventLog.Source = "AVS_WPF_VoronoiService_Source";
             cEventLog.Log = "AVS_WPF_VoronoiServiceLog";
