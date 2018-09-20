@@ -27,7 +27,7 @@ namespace AVS_WorldGeneration
             acResults = new List<List<double[]>>();
             List<EndpointAddress> cEpAdresses = new List<EndpointAddress>();
 
-            await Task.Run(delegate() { 
+            await Task.Run(delegate () {
                 foreach (IPAddress ip in cIpAddresses)
                 {
                     EndpointAddress cEndpoint = new EndpointAddress("http://" + ip.ToString() + ":" + nPort + "/VoronoiGenerationService");
@@ -50,7 +50,7 @@ namespace AVS_WorldGeneration
                         InstanceContext cInstanceContext = new InstanceContext(cCallback);
 
                         //var cWcfService = new VoronoiWCFServiceReference.VoronoiGenerationServiceClient(cInstanceContext, bBinding, cEPA);
-                        
+
                         var cWcfServiceDuplexChannel = new DuplexChannelFactory<IVoronoiGenerationService>(cCallback, bBinding, cEPA);
                         IVoronoiGenerationService cWcfService = cWcfServiceDuplexChannel.CreateChannel();
                         cWcfService.RandomiseVectors(cData);
