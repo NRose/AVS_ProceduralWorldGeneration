@@ -40,6 +40,9 @@ namespace AVS_WorldGeneration
                     EndpointAddress cEPA = cEpAdresses[i];
                     VoronoiData cData = cVoronoiData[i];
                     WSDualHttpBinding bBinding = new WSDualHttpBinding();
+                    WSDualHttpSecurity secur = new WSDualHttpSecurity();
+                    secur.Mode = WSDualHttpSecurityMode.None;
+                    bBinding.Security = secur;
 
                     try
                     {
