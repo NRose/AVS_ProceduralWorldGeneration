@@ -4,7 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
+
 
 namespace AVS_WorldGeneration
 {
@@ -54,7 +54,7 @@ namespace AVS_WorldGeneration
                     try
                     {
                         SocketCommunicationSender cServerSocket = new SocketCommunicationSender(IPAddress.Parse(cNode.sIPAddress.Split(':')[0]), 7345, 1024, true);
-                        Socket m_cUDPSocket = cServerSocket.Send(Helper.SocketCommunicationProtocol.START_WCF_SERVICE, false);
+                        Socket m_cUDPSocket = cServerSocket.Send(Helper.SocketCommunicationProtocol.GENERATE_VORONOI, true);
 
                         Helper.Distributor cDist = new Helper.Distributor();
                         cDist.cAddress = IPAddress.Parse(cNode.sIPAddress.Split(':')[0]);

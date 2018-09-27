@@ -159,6 +159,8 @@ namespace AVS_WorldGeneration
             public static byte SEARCH_FOR_NODES = 127;
             public static byte READY_FOR_WORK = 93;
             public static byte START_WCF_SERVICE = 101;
+            public static byte GENERATE_VORONOI = 156;
+            public static byte SEND_VECTORS_BACK = 189;
         }
 
         public class Node

@@ -72,6 +72,8 @@ namespace AVS_WorldGeneration
             
             m_cSocket.SendTo(abSendContent, m_cServerEndpoint);
 
+            // HIER WAREN WIR! :-)
+
             if (bWaitForAnswer)
             {
                 WaitForServices();
@@ -107,14 +109,30 @@ namespace AVS_WorldGeneration
             m_cArgs.Completed += Args_Completed;
             m_cSocket.ReceiveMessageFromAsync(m_cArgs);
 
-            byte bHeaderProtocol;
-            NodeInfos nodeInfos = new Helper.NodeInfos();
-
-            ByteArrayToStructure(cArgs.Buffer, ref nodeInfos, out bHeaderProtocol);
-
+            byte[] bytearray = cArgs.Buffer;
+            byte bHeaderProtocol = cArgs.Buffer[0];
+            
             if (bHeaderProtocol == SocketCommunicationProtocol.READY_FOR_WORK)
             {
+                NodeInfos nodeInfos = new Helper.NodeInfos();
+                Int32 nlen = BitConverter.ToInt32(bytearray, 1);
+                IntPtr i = Marshal.AllocHGlobal(nlen);
+                Marshal.Copy(bytearray, 5, i, nlen);
+                nodeInfos = (NodeInfos)Marshal.PtrToStructure(i, nodeInfos.GetType());
+                Marshal.FreeHGlobal(i);
+
                 m_acReceivedItems.Add(new Helper.Node() { bInUse = true, sIPAddress = (((IPEndPoint)cArgs.RemoteEndPoint).Address.ToString() + ":" + ((IPEndPoint)cArgs.RemoteEndPoint).Port.ToString()), nCores = nodeInfos.bCores, nProcessorsPhysical = nodeInfos.bProcessorsPhysical, nProcessorsLogical = nodeInfos.bProcessorsLogical, nThreads = nodeInfos.bCores });
+            }
+            else if (bHeaderProtocol == SocketCommunicationProtocol.SEND_VECTORS_BACK)
+            {
+                String test = "";
+                Int32 nlen = BitConverter.ToInt32(bytearray, 1);
+                IntPtr i = Marshal.AllocHGlobal(nlen);
+                Marshal.Copy(bytearray, 5, i, nlen);
+                test = (String)Marshal.PtrToStructure(i, test.GetType());
+                Marshal.FreeHGlobal(i);
+                Console.WriteLine("Ausgabe von Send Vectors Back: " + test);
+
             }
         }
 

@@ -245,7 +245,9 @@ namespace AVS_WorldGeneration
 
         private void BtnGenerateVoronoi_Click(object sender, RoutedEventArgs e)
         {
-            GenerateVoronoi();
+           // GenerateVoronoi();
+            m_cNetworkManager.InitializeNetwork(acAvailableNodes);
+            m_bNetworkDistribution = true;
         }
 
         private void BtnDrawVoronoi_Click(object sender, RoutedEventArgs e)
@@ -282,7 +284,7 @@ namespace AVS_WorldGeneration
             if (m_bNetworkDistribution)
             {
                 List<IPAddress> acAddresses = new List<IPAddress>();
-                List<WcfCommunication.VoronoiData> acData = new List<WcfCommunication.VoronoiData>();
+                //List<WcfCommunication.VoronoiData> acData = new List<WcfCommunication.VoronoiData>();
 
                 int nSingleCount = Convert.ToInt32(dVoronoiCount / m_cNetworkManager.acDistributors.Count);
                 m_dProgressStepForNetworkDistribution = (double)nSingleCount;
@@ -291,16 +293,17 @@ namespace AVS_WorldGeneration
                 {
                     acAddresses.Add(cDist.cAddress);
 
-                    WcfCommunication.VoronoiData cData = new WcfCommunication.VoronoiData();
+                    //WcfCommunication.VoronoiData cData = new WcfCommunication.VoronoiData();
 
-                    cData.Minimum = m_dMinimum;
-                    cData.Maximum = m_dMaximum;
-                    cData.Threads = cDist.nCores;
-                    cData.Count = nSingleCount;
+                    //cData.Minimum = m_dMinimum;
+                    //cData.Maximum = m_dMaximum;
+                    //cData.Threads = cDist.nCores;
+                    //cData.Count = nSingleCount;
 
-                    acData.Add(cData);
+                    //acData.Add(cData);
                 }
-                ServiceCallHelper.RunDistribution(acAddresses, 8733, acData);
+
+                //ServiceCallHelper.RunDistribution(acAddresses, 8733, acData);
             }
             else
             {
@@ -539,8 +542,8 @@ namespace AVS_WorldGeneration
         
         private void BtnCreateDistributionNetwork_Click(object sender, RoutedEventArgs e)
         {
-            m_cNetworkManager.InitializeNetwork(acAvailableNodes);
-            m_bNetworkDistribution = true;
+            //m_cNetworkManager.InitializeNetwork(acAvailableNodes);
+            //m_bNetworkDistribution = true;
         }
 
         public void TglNode_Click(object sender, RoutedEventArgs e)

@@ -20,7 +20,10 @@ namespace AVS_NodeCommunication
         public static byte SEARCH_FOR_NODES = 127;
         public static byte READY_FOR_WORK = 93;
         public static byte START_WCF_SERVICE = 101;
+        public static byte GENERATE_VORONOI = 156;
+        public static byte SEND_VECTORS_BACK = 189;
     }
+
     public class SocketCommunicationListener
     {
         private Socket socket;
@@ -73,11 +76,16 @@ namespace AVS_NodeCommunication
             {
                 if (receiveBuffer[0] == SocketCommunicationProtocol.SEARCH_FOR_NODES)
                 {
-                    SendAnswer(((IPEndPoint)e.RemoteEndPoint).Address, ((IPEndPoint)e.RemoteEndPoint).Port);
+                    SendAnswer(SocketCommunicationProtocol.READY_FOR_WORK, ((IPEndPoint)e.RemoteEndPoint).Address, ((IPEndPoint)e.RemoteEndPoint).Port);
                 }
                 else if (receiveBuffer[0] == SocketCommunicationProtocol.START_WCF_SERVICE)
                 {
                     StartWcfService();
+                }
+                else if (receiveBuffer[0] == SocketCommunicationProtocol.GENERATE_VORONOI)
+                {
+                    // toDo Generate Voronoi
+                    SendAnswer(SocketCommunicationProtocol.SEND_VECTORS_BACK, ((IPEndPoint)e.RemoteEndPoint).Address,  ((IPEndPoint)e.RemoteEndPoint).Port);
                 }
             }
 
@@ -102,16 +110,27 @@ namespace AVS_NodeCommunication
             }
         }
 
-        private void SendAnswer(IPAddress ipAddress, int port)
+        private void SendAnswer(byte protocol, IPAddress ipAddress, int port)
         {
             var destinationendpoint = new IPEndPoint(ipAddress, port);
 
-            NodeInfos node = ReadNodeInfos();
+            if (protocol == SocketCommunicationProtocol.READY_FOR_WORK)
+            {
+                
+                NodeInfos node = ReadNodeInfos();
 
-            byte[] nodeByte = StructureToByteArray(node,SocketCommunicationProtocol.READY_FOR_WORK);
-            
-            socket.SendTo(nodeByte, destinationendpoint);
-            //Console.WriteLine("Answer: READY_FOR_WORK + NodeInfos");
+                byte[] nodeByte = StructureToByteArray(node, SocketCommunicationProtocol.READY_FOR_WORK);
+
+                socket.SendTo(nodeByte, destinationendpoint);
+                //Console.WriteLine("Answer: READY_FOR_WORK + NodeInfos");
+            }else if (protocol == SocketCommunicationProtocol.SEND_VECTORS_BACK)
+            {
+                // Generate Voronois
+                String test = "hallooo";
+                byte[] nodeByte = StructureToByteArray(test, SocketCommunicationProtocol.SEND_VECTORS_BACK);
+                socket.SendTo(nodeByte, destinationendpoint);
+            }
+
         }
 
         private NodeInfos ReadNodeInfos()
