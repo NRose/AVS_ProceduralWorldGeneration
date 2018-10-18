@@ -84,11 +84,8 @@ namespace AVS_WorldGeneration
         private Object m_cObjThreadLocking = new Object();
         private Object m_cObjProgressbarLocking = new Object();
 
-        private NetworkManager m_cNetworkManager;
-        public List<Helper.Node> acAvailableNodes;
+        private DistributionManager m_cDistributionManager;
 
-        private bool m_bNetworkDistribution = false;
-        
         #endregion
 
         #region General Main Window
@@ -139,8 +136,7 @@ namespace AVS_WorldGeneration
             }
             tllbSystemInfo.Content = "Number of physical processors:\t" + m_nPhysicalProcessors.ToString() + "\nNumber of cores:\t\t\t" + m_nCores.ToString() + "\nNumber of logical processors:\t" + m_nLogicalProcessors.ToString() + "\nNumber of threads in use:\t\t" + m_nThreadsInUse.ToString();
 
-            m_cNetworkManager = new NetworkManager();
-            acAvailableNodes = new List<Helper.Node>();
+            m_cDistributionManager = new DistributionManager();
         }
 
         private void DefineLights()
@@ -245,9 +241,7 @@ namespace AVS_WorldGeneration
 
         private void BtnGenerateVoronoi_Click(object sender, RoutedEventArgs e)
         {
-           // GenerateVoronoi();
-            m_cNetworkManager.InitializeNetwork(acAvailableNodes);
-            m_bNetworkDistribution = true;
+            m_cDistributionManager.DistributeWork();
         }
 
         private void BtnDrawVoronoi_Click(object sender, RoutedEventArgs e)
@@ -259,7 +253,7 @@ namespace AVS_WorldGeneration
         {
             ClearVoronoi();
         }
-
+        /*
         private void GenerateVoronoi()
         {
             Logging systemLog = this.Log;
@@ -327,7 +321,7 @@ namespace AVS_WorldGeneration
                 /*m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMinimum, dMinimum }));
                 m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMinimum, dMaximum }));
                 m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMaximum, dMinimum }));
-                m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMaximum, dMaximum }));*/
+                m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMaximum, dMaximum }));
                 Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Start process: Randomizing Vectors", LogLevel.INFO });
 
                 if (m_nThreadsInUse > 1)
@@ -373,6 +367,7 @@ namespace AVS_WorldGeneration
                 cWorkerMain.RunWorkerAsync(dVoronoiCount);
             }
         }
+    */
 
         private void GenerateVoronoiEnd()
         {
@@ -537,7 +532,7 @@ namespace AVS_WorldGeneration
         private void BtnSearchForNodes_Click(object sender, RoutedEventArgs e)
         {
             lbxNodes.ItemsSource = null;
-            m_cNetworkManager.InitializeNetworkManager();
+            m_cDistributionManager.SearchNodes();
         }
         
         private void BtnCreateDistributionNetwork_Click(object sender, RoutedEventArgs e)
@@ -550,7 +545,7 @@ namespace AVS_WorldGeneration
         {
             System.Windows.Controls.CheckBox cbxCheck = (sender as System.Windows.Controls.CheckBox);
 
-            acAvailableNodes.Find(o => o.sIPAddress == cbxCheck.Tag.ToString()).bInUse = (bool)cbxCheck.IsChecked;
+            m_cDistributionManager.acAvailableNodes.Find(o => o.sIPAddress == cbxCheck.Tag.ToString()).bInUse = (bool)cbxCheck.IsChecked;
             UpdateNodeList();
         }
 
@@ -558,10 +553,9 @@ namespace AVS_WorldGeneration
         {
             System.Windows.Controls.Button btnPlus = (sender as System.Windows.Controls.Button);
 
-            acAvailableNodes.Find(o => o.sIPAddress == btnPlus.Tag.ToString()).nThreads += 1;
-            if (acAvailableNodes.Find(o => o.sIPAddress == btnPlus.Tag.ToString()).nThreads > 99)
+            if (m_cDistributionManager.acAvailableNodes.Find(o => o.sIPAddress == btnPlus.Tag.ToString()).bThreads < 99)
             {
-                acAvailableNodes.Find(o => o.sIPAddress == btnPlus.Tag.ToString()).nThreads = 99;
+                m_cDistributionManager.acAvailableNodes.Find(o => o.sIPAddress == btnPlus.Tag.ToString()).bThreads += 1;
             }
             UpdateNodeList();
         }
@@ -570,10 +564,9 @@ namespace AVS_WorldGeneration
         {
             System.Windows.Controls.Button btnMinus = (sender as System.Windows.Controls.Button);
 
-            acAvailableNodes.Find(o => o.sIPAddress == btnMinus.Tag.ToString()).nThreads -= 1;
-            if(acAvailableNodes.Find(o => o.sIPAddress == btnMinus.Tag.ToString()).nThreads < 0)
+            if(m_cDistributionManager.acAvailableNodes.Find(o => o.sIPAddress == btnMinus.Tag.ToString()).bThreads > 1)
             {
-                acAvailableNodes.Find(o => o.sIPAddress == btnMinus.Tag.ToString()).nThreads = 0;
+                m_cDistributionManager.acAvailableNodes.Find(o => o.sIPAddress == btnMinus.Tag.ToString()).bThreads -= 1;
             }
             UpdateNodeList();
         }
@@ -582,7 +575,7 @@ namespace AVS_WorldGeneration
         {
             lbxNodes.ItemsSource = null;
             lbxNodes.Items.Clear();
-            lbxNodes.ItemsSource = acAvailableNodes;
+            lbxNodes.ItemsSource = m_cDistributionManager.acAvailableNodes;
         }
 
         private void GenerateVoronoiThread(object sender, DoWorkEventArgs e)

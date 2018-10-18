@@ -113,27 +113,29 @@ namespace AVS_NodeCommunication
 
         private void SendAnswer(byte protocol, IPAddress ipAddress, int port)
         {
+            m_cEvent.WriteEntry("Start sending answer...");
             var destinationendpoint = new IPEndPoint(ipAddress, port);
 
             if (protocol == SocketCommunicationProtocol.READY_FOR_WORK)
             {
-                
+                m_cEvent.WriteEntry("Packing and parsing node info...");
                 NodeInfos node = ReadNodeInfos();
-
                 byte[] nodeByte = StructureToByteArray(node, SocketCommunicationProtocol.READY_FOR_WORK);
-
-                socket.SendTo(nodeByte, destinationendpoint);
-                //Console.WriteLine("Answer: READY_FOR_WORK + NodeInfos");
-            }else if (protocol == SocketCommunicationProtocol.SEND_VECTORS_BACK)
-            {
-                // Generate Voronois
-                NodeResult cResult = new NodeResult();
-                cResult.sAnwser = "Hallo, ich komme vom Node";
-
-                byte[] nodeByte = StructureToByteArray(cResult, SocketCommunicationProtocol.SEND_VECTORS_BACK);
+                m_cEvent.WriteEntry("Sending node info...");
                 socket.SendTo(nodeByte, destinationendpoint);
             }
+            else if (protocol == SocketCommunicationProtocol.SEND_VECTORS_BACK)
+            {
+                m_cEvent.WriteEntry("Packing node result...");
+                NodeResult cResult = new NodeResult();
+                cResult.bAnwser = 111;
 
+                m_cEvent.WriteEntry("Parsing node result...");
+                byte[] nodeByte = StructureToByteArray(cResult, SocketCommunicationProtocol.SEND_VECTORS_BACK);
+                m_cEvent.WriteEntry("Sending node result...");
+                socket.SendTo(nodeByte, destinationendpoint);
+            }
+            m_cEvent.WriteEntry("END sending answer!");
         }
 
         private NodeInfos ReadNodeInfos()
@@ -181,6 +183,6 @@ namespace AVS_NodeCommunication
 
     public struct NodeResult
     {
-        public string sAnwser { get; set; }
+        public byte bAnwser { get; set; }
     }
 }

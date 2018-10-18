@@ -11,6 +11,7 @@ namespace AVS_WorldGeneration
 {
     class NetworkManager
     {
+        /*
         public List<Helper.Distributor> acDistributors
         {
             get
@@ -72,6 +73,6 @@ namespace AVS_WorldGeneration
                     }
                 }
             }
-        }
+        }*/
     }
 }

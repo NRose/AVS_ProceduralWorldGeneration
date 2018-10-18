@@ -16,6 +16,7 @@ namespace AVS_WorldGeneration
 {
     class SocketCommunicationSender
     {
+        /*
         private Socket m_cSocket;
         private byte[] m_abReceiveBuffer;
         private int m_nSourcePort = 55261;
@@ -60,6 +61,15 @@ namespace AVS_WorldGeneration
 
         public Socket Send(byte bCommand, bool bWaitForAnswer = true, bool bWaitForService = true)
         {
+            if (bWaitForService)
+            {
+                WaitForServices();
+            }
+            else
+            {
+                m_bSocketClosed = false;
+            }
+
             byte[] abSendContent = new byte[m_nReceiveBufferLength];
             abSendContent[0] = bCommand;
 
@@ -77,15 +87,6 @@ namespace AVS_WorldGeneration
             Debug.WriteLine("SENDED CMD");
             // HIER WAREN WIR! :-)
 
-            if (bWaitForService)
-            {
-                WaitForServices();
-            }
-            else
-            {
-                m_bSocketClosed = false;
-            }
-
             return m_cSocket;
         }
 
@@ -96,6 +97,7 @@ namespace AVS_WorldGeneration
                 await Task.Delay(10);
                 (Application.Current.MainWindow as MainWindow).pbSearchForNodes.Value += 0.1f;
             }
+            Debug.WriteLine("Socket will close");
             m_bSocketClosed = true;
             (Application.Current.MainWindow as MainWindow).acAvailableNodes = new List<Helper.Node>(m_acReceivedItems);
             (Application.Current.MainWindow as MainWindow).UpdateNodeList();
@@ -105,8 +107,9 @@ namespace AVS_WorldGeneration
         private void Args_Completed(object cSender, SocketAsyncEventArgs cArgs)
         {
             Debug.WriteLine("ARGS COMPLETED");
-            if (m_bSocketClosed)
+            if (m_bSocketClosed && cArgs.Buffer[0] != SocketCommunicationProtocol.SEND_VECTORS_BACK)
             {
+                Debug.WriteLine("Socket already closed");
                 m_cSocket.Close();
                 m_bSocketClosed = false;
                 return;
@@ -139,7 +142,7 @@ namespace AVS_WorldGeneration
                 Marshal.Copy(bytearray, 5, i, nlen);
                 cResult = (NodeResult)Marshal.PtrToStructure(i, cResult.GetType());
                 Marshal.FreeHGlobal(i);
-                Debug.WriteLine("Ausgabe von Send Vectors Back: " + cResult.sAnswer);
+                Debug.WriteLine("Ausgabe von Send Vectors Back: " + cResult.bAnswer.ToString());
             }
         }
 
@@ -151,6 +154,6 @@ namespace AVS_WorldGeneration
             Marshal.Copy(bytearray, 5, i, nlen);
             obj = (NodeInfos)Marshal.PtrToStructure(i, obj.GetType());
             Marshal.FreeHGlobal(i);
-        }
+        }*/
     }
 }

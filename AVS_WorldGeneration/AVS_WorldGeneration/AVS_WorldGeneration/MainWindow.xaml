@@ -106,14 +106,14 @@
                                     <CheckBox Tag="{Binding sIPAddress}" IsChecked="{Binding bInUse}" VerticalAlignment="Center" Click="TglNode_Click"></CheckBox>
                                     <TextBlock Text="{Binding sIPAddress}" Width="100" Padding="5" />
                                     <TextBlock Text=" || Physical Processors: " Padding="5" />
-                                    <TextBlock Text="{Binding nProcessorsPhysical}" Width="20" Padding="5" />
+                                    <TextBlock Text="{Binding bProcessorsPhysical}" Width="20" Padding="5" />
                                     <TextBlock Text=" | Cores: " Padding="5" />
-                                    <TextBlock Text="{Binding nCores}" Width="20" Padding="5" />
+                                    <TextBlock Text="{Binding bCores}" Width="20" Padding="5" />
                                     <TextBlock Text=" | Logical Processors: " Padding="5" />
-                                    <TextBlock Text="{Binding nProcessorsLogical}" Width="20" Padding="5" />
+                                    <TextBlock Text="{Binding bProcessorsLogical}" Width="20" Padding="5" />
                                     <TextBlock Text=" | Threads in use: " Padding="5" />
                                     <Button Tag="{Binding sIPAddress}" Height="20" Width="20" Click="MinusNode_Click">-</Button>
-                                    <TextBlock Text="{Binding nThreads}" TextAlignment="Right" Width="25" Padding="5" />
+                                    <TextBlock Text="{Binding bThreads}" TextAlignment="Right" Width="25" Padding="5" />
                                     <Button Tag="{Binding sIPAddress}" Height="20" Width="20" Click="PlusNode_Click">+</Button>
                                 </StackPanel>
                             </DataTemplate>

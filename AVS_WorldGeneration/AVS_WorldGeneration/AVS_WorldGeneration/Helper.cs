@@ -167,10 +167,22 @@ namespace AVS_WorldGeneration
         {
             public bool bInUse { get; set; }
             public string sIPAddress { get; set; }
-            public int nCores { get; set; }
-            public int nProcessorsPhysical { get; set; }
-            public int nProcessorsLogical { get; set; }
-            public int nThreads { get; set; }
+            public NodeInfos cNodeInfo;
+            public byte bCores { get { return cNodeInfo.bCores; } }
+            public byte bProcessorsPhysical { get { return cNodeInfo.bProcessorsPhysical; } }
+            public byte bProcessorsLogical { get { return cNodeInfo.bProcessorsLogical; } }
+            public byte bThreads { get; set; }
+
+            public Node(string _sIPAddress, NodeInfos _cNodeInfo)
+            {
+                bInUse = true;
+                sIPAddress = _sIPAddress;
+                cNodeInfo = new NodeInfos();
+                cNodeInfo.bCores = _cNodeInfo.bCores;
+                cNodeInfo.bProcessorsPhysical = _cNodeInfo.bProcessorsPhysical;
+                cNodeInfo.bProcessorsLogical = _cNodeInfo.bProcessorsLogical;
+                bThreads = _cNodeInfo.bCores;
+            }
         }
 
         public struct NodeInfos
@@ -182,13 +194,7 @@ namespace AVS_WorldGeneration
 
         public struct NodeResult
         {
-            public string sAnswer { get; set; }
-        }
-
-        public struct Distributor
-        {
-            public IPAddress cAddress;
-            public int nCores;
+            public byte bAnswer { get; set; }
         }
     }
 }
