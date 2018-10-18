@@ -84,6 +84,7 @@ namespace AVS_NodeCommunication
                 }
                 else if (receiveBuffer[0] == SocketCommunicationProtocol.GENERATE_VORONOI)
                 {
+                    m_cEvent.WriteEntry("Generate Voronoi via Sockets");
                     // toDo Generate Voronoi
                     SendAnswer(SocketCommunicationProtocol.SEND_VECTORS_BACK, ((IPEndPoint)e.RemoteEndPoint).Address,  ((IPEndPoint)e.RemoteEndPoint).Port);
                 }
@@ -126,8 +127,10 @@ namespace AVS_NodeCommunication
             }else if (protocol == SocketCommunicationProtocol.SEND_VECTORS_BACK)
             {
                 // Generate Voronois
-                String test = "hallooo";
-                byte[] nodeByte = StructureToByteArray(test, SocketCommunicationProtocol.SEND_VECTORS_BACK);
+                NodeResult cResult = new NodeResult();
+                cResult.sAnwser = "Hallo, ich komme vom Node";
+
+                byte[] nodeByte = StructureToByteArray(cResult, SocketCommunicationProtocol.SEND_VECTORS_BACK);
                 socket.SendTo(nodeByte, destinationendpoint);
             }
 
@@ -153,21 +156,15 @@ namespace AVS_NodeCommunication
         private byte[] StructureToByteArray(object obj, byte protocol)
         {
             Int32 nlen = Marshal.SizeOf(obj);
-
             byte[] arr = new byte[nlen + 5];
-
             arr[0] = protocol;
-
             byte[] abLen = BitConverter.GetBytes(nlen);
             abLen.CopyTo(arr, 1);
 
 
             IntPtr ptr = Marshal.AllocHGlobal(nlen);
-
             Marshal.StructureToPtr(obj, ptr, true);
-
             Marshal.Copy(ptr, arr, 5, nlen);
-
             Marshal.FreeHGlobal(ptr);
 
             return arr;
@@ -180,5 +177,10 @@ namespace AVS_NodeCommunication
         public byte bCores { get; set; }
         public byte bProcessorsPhysical { get; set; }
         public byte bProcessorsLogical { get; set; }
+    }
+
+    public struct NodeResult
+    {
+        public string sAnwser { get; set; }
     }
 }

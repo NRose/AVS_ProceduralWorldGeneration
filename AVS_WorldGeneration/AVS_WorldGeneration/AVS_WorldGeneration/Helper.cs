@@ -180,6 +180,11 @@ namespace AVS_WorldGeneration
             public byte bProcessorsLogical { get; set; }
         }
 
+        public struct NodeResult
+        {
+            public string sAnswer { get; set; }
+        }
+
         public struct Distributor
         {
             public IPAddress cAddress;

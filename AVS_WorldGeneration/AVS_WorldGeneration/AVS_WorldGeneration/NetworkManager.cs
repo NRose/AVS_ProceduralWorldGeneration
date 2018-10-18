@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -54,7 +55,7 @@ namespace AVS_WorldGeneration
                     try
                     {
                         SocketCommunicationSender cServerSocket = new SocketCommunicationSender(IPAddress.Parse(cNode.sIPAddress.Split(':')[0]), 7345, 1024, true);
-                        Socket m_cUDPSocket = cServerSocket.Send(Helper.SocketCommunicationProtocol.GENERATE_VORONOI, true);
+                        Socket m_cUDPSocket = cServerSocket.Send(Helper.SocketCommunicationProtocol.GENERATE_VORONOI, true, false);
 
                         Helper.Distributor cDist = new Helper.Distributor();
                         cDist.cAddress = IPAddress.Parse(cNode.sIPAddress.Split(':')[0]);

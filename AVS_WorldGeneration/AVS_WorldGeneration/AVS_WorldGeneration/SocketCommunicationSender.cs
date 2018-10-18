@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Runtime.InteropServices;
 using static AVS_WorldGeneration.Helper;
+using System.Windows.Threading;
+using System.Diagnostics;
 
 namespace AVS_WorldGeneration
 {
@@ -56,7 +58,7 @@ namespace AVS_WorldGeneration
 
         }
 
-        public Socket Send(byte bCommand, bool bWaitForAnswer = true)
+        public Socket Send(byte bCommand, bool bWaitForAnswer = true, bool bWaitForService = true)
         {
             byte[] abSendContent = new byte[m_nReceiveBufferLength];
             abSendContent[0] = bCommand;
@@ -72,11 +74,16 @@ namespace AVS_WorldGeneration
             
             m_cSocket.SendTo(abSendContent, m_cServerEndpoint);
 
+            Debug.WriteLine("SENDED CMD");
             // HIER WAREN WIR! :-)
 
-            if (bWaitForAnswer)
+            if (bWaitForService)
             {
                 WaitForServices();
+            }
+            else
+            {
+                m_bSocketClosed = false;
             }
 
             return m_cSocket;
@@ -94,10 +101,11 @@ namespace AVS_WorldGeneration
             (Application.Current.MainWindow as MainWindow).UpdateNodeList();
             (Application.Current.MainWindow as MainWindow).btnConntectToNodes.IsEnabled = true;
         }
-
+        
         private void Args_Completed(object cSender, SocketAsyncEventArgs cArgs)
         {
-            if(m_bSocketClosed)
+            Debug.WriteLine("ARGS COMPLETED");
+            if (m_bSocketClosed)
             {
                 m_cSocket.Close();
                 m_bSocketClosed = false;
@@ -125,32 +133,24 @@ namespace AVS_WorldGeneration
             }
             else if (bHeaderProtocol == SocketCommunicationProtocol.SEND_VECTORS_BACK)
             {
-                String test = "";
+                NodeResult cResult = new NodeResult();
                 Int32 nlen = BitConverter.ToInt32(bytearray, 1);
                 IntPtr i = Marshal.AllocHGlobal(nlen);
                 Marshal.Copy(bytearray, 5, i, nlen);
-                test = (String)Marshal.PtrToStructure(i, test.GetType());
+                cResult = (NodeResult)Marshal.PtrToStructure(i, cResult.GetType());
                 Marshal.FreeHGlobal(i);
-                Console.WriteLine("Ausgabe von Send Vectors Back: " + test);
-
+                Debug.WriteLine("Ausgabe von Send Vectors Back: " + cResult.sAnswer);
             }
         }
 
         private void ByteArrayToStructure(byte[] bytearray, ref NodeInfos obj, out byte protocol)
         {
             protocol = bytearray[0];
-
             Int32 nlen = BitConverter.ToInt32(bytearray, 1);
-
             IntPtr i = Marshal.AllocHGlobal(nlen);
-
             Marshal.Copy(bytearray, 5, i, nlen);
-
             obj = (NodeInfos)Marshal.PtrToStructure(i, obj.GetType());
-
             Marshal.FreeHGlobal(i);
-
         }
-
     }
 }
