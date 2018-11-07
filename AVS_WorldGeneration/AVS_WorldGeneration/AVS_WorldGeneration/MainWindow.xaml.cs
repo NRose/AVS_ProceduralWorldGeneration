@@ -34,15 +34,14 @@ namespace AVS_WorldGeneration
         delegate void VoronoiProgress(double bValue);
         delegate void Logging(string sLogMessage, LogLevel eLogLevel);
 
+        private Logging m_cSystemLog;// = Log;
+        private VoronoiProgress m_cUpdatePB;// = IncreaseProgress;
+
         #endregion
 
         #region VARIABLES - Voronoi
-
-        private List<List<BenTools.Mathematics.Vector>> m_acVectors = new List<List<BenTools.Mathematics.Vector>>();
-        private Random m_kRnd = new Random();
-        private int m_nSeed = 0;
-        private double[] m_dVector;
-        private VoronoiGraph m_kVoronoi;
+        
+        private VoronoiGraph m_cVoronoi;
 
         private const double m_dMinimum = -1.0;
         private const double m_dMaximum = 1.0;
@@ -66,23 +65,11 @@ namespace AVS_WorldGeneration
 
         #region VARIABLES - Local Distribution
         
-        private int m_nPhysicalProcessors = 0;
-        private int m_nCores = 0;
-        private int m_nLogicalProcessors = 0;
-        private int m_nThreadsInUse = 1;
-
-        private List<uint> m_acCurrentCPUFrequency;
-        private List<uint> m_acMaxCPUFrequency;
-
-        private double m_dVoronoiCount_Threaded = 0.0;
-        private int m_nVoronoiFinished_Threaded = 0;
 
         #endregion
 
         #region VARIABLES - Network Distribution
 
-        private Object m_cObjThreadLocking = new Object();
-        private Object m_cObjProgressbarLocking = new Object();
 
         private DistributionManager m_cDistributionManager;
 
@@ -93,10 +80,9 @@ namespace AVS_WorldGeneration
         public MainWindow()
         {
             InitializeComponent();
-            
-            m_nSeed = m_kRnd.Next();
-            m_kRnd = new Random(m_nSeed);
-            tbxSeed.Text = m_nSeed.ToString();
+
+            m_cSystemLog = Log;
+            m_cUpdatePB = IncreaseProgress;
 
             m_kMainCamera = new PerspectiveCamera();
             m_kMainCamera.FieldOfView = 60;
@@ -112,31 +98,7 @@ namespace AVS_WorldGeneration
 
             vpOutputView.Children.Add(kModelVisual);*/
 
-            foreach (var item in new System.Management.ManagementObjectSearcher("Select * from Win32_ComputerSystem").Get())
-            {
-                m_nPhysicalProcessors = int.Parse(item["NumberOfProcessors"].ToString());
-                m_nLogicalProcessors = int.Parse(item["NumberOfLogicalProcessors"].ToString());
-            }
-            foreach (var item in new System.Management.ManagementObjectSearcher("Select * from Win32_Processor").Get())
-            {
-                m_nCores += int.Parse(item["NumberOfCores"].ToString());
-            }
-
-            m_acCurrentCPUFrequency = new List<uint>();
-            m_acMaxCPUFrequency = new List<uint>();
-
-            for(int i = 0; i < m_nPhysicalProcessors; i++)
-            {
-                string sCPU = "Win32_Processor.DeviceID='CPU" + i.ToString() + "'";
-                using (ManagementObject item = new ManagementObject(sCPU))
-                {
-                    m_acCurrentCPUFrequency.Add((uint)(item["CurrentClockSpeed"]));
-                    m_acMaxCPUFrequency.Add((uint)(item["MaxClockSpeed"]));
-                }
-            }
-            tllbSystemInfo.Content = "Number of physical processors:\t" + m_nPhysicalProcessors.ToString() + "\nNumber of cores:\t\t\t" + m_nCores.ToString() + "\nNumber of logical processors:\t" + m_nLogicalProcessors.ToString() + "\nNumber of threads in use:\t\t" + m_nThreadsInUse.ToString();
-
-            m_cDistributionManager = new DistributionManager();
+            m_cDistributionManager = new DistributionManager(m_dMinimum, m_dMaximum);
         }
 
         private void DefineLights()
@@ -230,7 +192,7 @@ namespace AVS_WorldGeneration
             PositionCamera();
         }
 
-        private void IncreaseProgress(double dValue)
+        public void IncreaseProgress(double dValue)
         {
             pbGenerateVoronoi.Value += dValue;
         }
@@ -241,7 +203,20 @@ namespace AVS_WorldGeneration
 
         private void BtnGenerateVoronoi_Click(object sender, RoutedEventArgs e)
         {
-            m_cDistributionManager.DistributeWork();
+            int nSeed = 0;
+            if (!int.TryParse((Application.Current.MainWindow as MainWindow).tbxSeed.Text, out nSeed))
+            {
+                Dispatcher.CurrentDispatcher.Invoke(m_cSystemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Seed contains illegal characters!", LogLevel.WARN });
+                return;
+            }
+            double dVoronoiCount = 0;
+            if (!double.TryParse((Application.Current.MainWindow as MainWindow).tbxVoronoiLoopCount.Text, out dVoronoiCount))
+            {
+                Dispatcher.CurrentDispatcher.Invoke(m_cSystemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Loop count contains illegal characters!", LogLevel.WARN });
+                return;
+            }
+
+            m_cDistributionManager.DistributeWork(nSeed, dVoronoiCount);
         }
 
         private void BtnDrawVoronoi_Click(object sender, RoutedEventArgs e)
@@ -253,9 +228,10 @@ namespace AVS_WorldGeneration
         {
             ClearVoronoi();
         }
-        /*
+
         private void GenerateVoronoi()
         {
+            /*
             Logging systemLog = this.Log;
             int nSeed = 0;
             if (!int.TryParse(tbxSeed.Text, out nSeed))
@@ -301,95 +277,30 @@ namespace AVS_WorldGeneration
             }
             else
             {
-                Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Start process: Generate World", LogLevel.INFO });
-                Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Info: Seed: " + m_nSeed.ToString(), LogLevel.INFO });
-                Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Info: Loop count: " + dVoronoiCount.ToString(), LogLevel.INFO });
 
-                Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Info: Physical processors: " + m_nPhysicalProcessors.ToString(), LogLevel.INFO });
-                Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Info: Cores: " + m_nCores.ToString(), LogLevel.INFO });
-                Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Info: Logical processors: " + m_nLogicalProcessors.ToString(), LogLevel.INFO });
-                Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Info: Threads in use: " + m_nThreadsInUse.ToString(), LogLevel.INFO });
-
-                for (int nCurrent = 0; nCurrent < m_acCurrentCPUFrequency.Count; nCurrent++)
-                {
-                    Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Info: CPU" + nCurrent + " current frequency: " + m_acCurrentCPUFrequency[nCurrent].ToString(), LogLevel.INFO });
-                    Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Info: CPU" + nCurrent + " maximal frequency: " + m_acMaxCPUFrequency[nCurrent].ToString(), LogLevel.INFO });
-                }
-
-                double dOneStep = 100.0 / (dVoronoiCount + (dVoronoiCount * 0.33f));
-                m_acVectors = new List<List<BenTools.Mathematics.Vector>>();
                 /*m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMinimum, dMinimum }));
                 m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMinimum, dMaximum }));
                 m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMaximum, dMinimum }));
                 m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMaximum, dMaximum }));
-                Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Start process: Randomizing Vectors", LogLevel.INFO });
-
-                if (m_nThreadsInUse > 1)
-                {
-                    m_dVoronoiCount_Threaded = dVoronoiCount / m_nThreadsInUse;
-                    double dExtra = dVoronoiCount % m_nThreadsInUse;
-
-                    for (int i = 0; i < m_nThreadsInUse; i++)
-                    {
-                        Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Start process: Thread " + (i + 1).ToString() + "/" + m_nThreadsInUse.ToString() + " Generation", LogLevel.INFO });
-                        BackgroundWorker cWorker = new BackgroundWorker
-                        {
-                            WorkerReportsProgress = false,
-                            WorkerSupportsCancellation = false
-                        };
-                        cWorker.DoWork += GenerateVoronoiVectors;
-                        cWorker.RunWorkerCompleted += GenerateVoronoiVectorsFinished;
-
-                        cWorker.RunWorkerAsync(dVoronoiCount / m_nThreadsInUse + dExtra);
-                        dExtra = 0.0;
-                    }
-                }
-                else
-                {
-                    Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Start process: Main Thread Generation", LogLevel.INFO });
-                    m_acVectors.Add(new List<BenTools.Mathematics.Vector>());
-                    for (int i = 0; i < dVoronoiCount; i++)
-                    {
-                        m_dVector = new double[] { m_kRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum, m_kRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum };
-                        m_acVectors[0].Add(new BenTools.Mathematics.Vector(m_dVector));
-                        pbGenerateVoronoi.Dispatcher.Invoke(updatePB, System.Windows.Threading.DispatcherPriority.Background, new object[] { dOneStep });
-                    }
-                    m_nVoronoiFinished_Threaded++;
-                    Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "End process: Main Thread Generation", LogLevel.INFO });
-                }
-                BackgroundWorker cWorkerMain = new BackgroundWorker
-                {
-                    WorkerReportsProgress = false,
-                    WorkerSupportsCancellation = false
-                };
-                cWorkerMain.DoWork += GenerateVoronoiThread;
-
-                cWorkerMain.RunWorkerAsync(dVoronoiCount);
             }
-        }
     */
+        }
 
-        private void GenerateVoronoiEnd()
+        public void GenerateVoronoiEnd()
         {
-            Logging systemLog = this.Log;
-
-            VoronoiProgress updatePB = IncreaseProgress;
-
             Application.Current.Dispatcher.Invoke(new Action(() => AddLog("End process: Randomizing Vectors", LogLevel.INFO)));
-
-            //m_akVectors = m_akVectors.OrderBy(o => o[0]).ThenBy(o => o[1]).ToList();
             Application.Current.Dispatcher.Invoke(new Action(() => AddLog("Start process: Generate Voronoi", LogLevel.INFO)));
 
             List<BenTools.Mathematics.Vector> acFinalList = new List<BenTools.Mathematics.Vector>();
 
-            for(int i = 0; i < m_acVectors.Count; i++)
+            for(int i = 0; i < m_cDistributionManager.acVectors.Count; i++)
             {
-                acFinalList.AddRange(m_acVectors[i]);
+                acFinalList.AddRange(m_cDistributionManager.acVectors[i]);
             }
 
-            m_kVoronoi = Fortune.ComputeVoronoiGraph(acFinalList);
+            m_cVoronoi = Fortune.ComputeVoronoiGraph(acFinalList);
             Application.Current.Dispatcher.Invoke(new Action(() => AddLog("End process: Generate Voronoi", LogLevel.INFO)));
-            pbGenerateVoronoi.Dispatcher.Invoke(updatePB, System.Windows.Threading.DispatcherPriority.Background, new object[] { (100.0 - pbGenerateVoronoi.Value) });
+            LogVoronoiProgress(100.0 - pbGenerateVoronoi.Value);
             if (!btnClearVoronoi.IsEnabled)
             {
                 btnDrawVoronoi.IsEnabled = true;
@@ -401,73 +312,58 @@ namespace AVS_WorldGeneration
         private void DrawVoronoi()
         {
             btnDrawVoronoi.IsEnabled = false;
-            Logging systemLog = this.Log;
 
-            Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Start process: Draw Voronoi", LogLevel.INFO });
+            AddLog("Start process: Draw Voronoi", LogLevel.INFO);
             MeshGeometry3D kMesh = new MeshGeometry3D();
 
-            /*
-            m_kVoronoi.Vertizes.OrderBy(o => o[0]);
-            m_kVoronoi.Vertizes.OrderByDescending(o => o[1]);
-            foreach (BenTools.Mathematics.Vector kVector in m_kVoronoi.Vertizes)
-            {
-                Point3D p0 = new Point3D(kVector[0], kVector[1], 0.0f);
-                kMesh.TriangleIndices.Add(Helper.AddPoint(kMesh.Positions, p0));
-                
-                Point3D p0 = new Point3D(kEdge.LeftData[0], kEdge.LeftData[1], 0.0f);
-                Point3D p1 = new Point3D(kEdge.RightData[0], kEdge.RightData[1], 0.0f);
-                kMesh.TriangleIndices.Add(Helper.AddPoint(kMesh.Positions, p0));
-                kMesh.TriangleIndices.Add(Helper.AddPoint(kMesh.Positions, p1));
-            }
-            */
-            List<VoronoiEdge> akEdges = new List<VoronoiEdge>();
+            List<VoronoiEdge> acEdges = new List<VoronoiEdge>();
             
-            foreach (VoronoiEdge kEdge in m_kVoronoi.Edges)
+            foreach (VoronoiEdge cEdge in m_cVoronoi.Edges)
             {
-                akEdges.Add(kEdge);
+                acEdges.Add(cEdge);
             }
 
-            Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Start process: Draw Edges", LogLevel.INFO });
-            for (int i = 0; i < akEdges.Count; i++)
+            AddLog("Start process: Draw Edges", LogLevel.INFO);
+            for (int i = 0; i < acEdges.Count; i++)
             {
-                if (akEdges[i].VVertexA == Fortune.VVUnkown || akEdges[i].VVertexA == Fortune.VVInfinite)
+                if (acEdges[i].VVertexA == Fortune.VVUnkown || acEdges[i].VVertexA == Fortune.VVInfinite)
                 {
-                    Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "VVertexA unknown or infinite", LogLevel.ERROR });
+                    AddLog("VVertexA unknown or infinite", LogLevel.ERROR);
                     continue;
                 }
-                Point3D p0 = new Point3D(akEdges[i].VVertexA[0], akEdges[i].VVertexA[1], 0.0);
+                Point3D p0 = new Point3D(acEdges[i].VVertexA[0], acEdges[i].VVertexA[1], 0.0);
 
-                if (akEdges[i].VVertexB == Fortune.VVUnkown || akEdges[i].VVertexB == Fortune.VVInfinite)
+                if (acEdges[i].VVertexB == Fortune.VVUnkown || acEdges[i].VVertexB == Fortune.VVInfinite)
                 {
-                    Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "VVertexB unknown or infinite", LogLevel.ERROR });
+                    AddLog("VVertexB unknown or infinite", LogLevel.ERROR);
                     continue;
                 }
-                Point3D p1 = new Point3D(akEdges[i].VVertexB[0], akEdges[i].VVertexB[1], 0.0);
+                Point3D p1 = new Point3D(acEdges[i].VVertexB[0], acEdges[i].VVertexB[1], 0.0);
 
-                if (akEdges[i].FixedPoint == Fortune.VVUnkown || akEdges[i].FixedPoint == Fortune.VVInfinite)
+                if (acEdges[i].FixedPoint == Fortune.VVUnkown || acEdges[i].FixedPoint == Fortune.VVInfinite)
                 {
-                    Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "FixedPoint unknown or infinite", LogLevel.ERROR });
+                    AddLog("FixedPoint unknown or infinite", LogLevel.ERROR);
                     continue;
                 }
 
                 if ((bool)cbClearEdges.IsChecked)
                 {
-                    if (akEdges[i].VVertexA[0] > m_dMaximum || akEdges[i].VVertexA[0] < m_dMinimum ||
-                   akEdges[i].VVertexA[1] > m_dMaximum || akEdges[i].VVertexA[1] < m_dMinimum ||
-                   akEdges[i].VVertexB[0] > m_dMaximum || akEdges[i].VVertexB[0] < m_dMinimum ||
-                   akEdges[i].VVertexB[1] > m_dMaximum || akEdges[i].VVertexB[1] < m_dMinimum ||
-                   akEdges[i].FixedPoint[0] > m_dMaximum || akEdges[i].FixedPoint[0] < m_dMinimum ||
-                   akEdges[i].FixedPoint[1] > m_dMaximum || akEdges[i].FixedPoint[1] < m_dMinimum)
+                    if (acEdges[i].VVertexA[0] > m_dMaximum || acEdges[i].VVertexA[0] < m_dMinimum ||
+                   acEdges[i].VVertexA[1] > m_dMaximum || acEdges[i].VVertexA[1] < m_dMinimum ||
+                   acEdges[i].VVertexB[0] > m_dMaximum || acEdges[i].VVertexB[0] < m_dMinimum ||
+                   acEdges[i].VVertexB[1] > m_dMaximum || acEdges[i].VVertexB[1] < m_dMinimum ||
+                   acEdges[i].FixedPoint[0] > m_dMaximum || acEdges[i].FixedPoint[0] < m_dMinimum ||
+                   acEdges[i].FixedPoint[1] > m_dMaximum || acEdges[i].FixedPoint[1] < m_dMinimum)
                     {
-                        Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Some Vertex out of range", LogLevel.DEBUG });
+                        AddLog("Some Vertex out of range", LogLevel.DEBUG);
                         continue;
                     }
                 }
-                Point3D p2 = new Point3D(akEdges[i].FixedPoint[0], akEdges[i].FixedPoint[1], 0.0);
+                Point3D p2 = new Point3D(acEdges[i].FixedPoint[0], acEdges[i].FixedPoint[1], 0.0);
 
                 Helper.AddTriangle(kMesh, p0, p1, p2);
             }
-            Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "End process: Draw Edges", LogLevel.INFO });
+            AddLog("End process: Draw Edges", LogLevel.INFO);
 
             DiffuseMaterial kSurfaceMaterial = new DiffuseMaterial(Brushes.Orange);
             GeometryModel3D kSurfaceModel = new GeometryModel3D(kMesh, kSurfaceMaterial);
@@ -476,7 +372,7 @@ namespace AVS_WorldGeneration
 
             if ((bool)cbDrawWireframe.IsChecked)
             {
-                Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Start process: Draw Wireframe", LogLevel.INFO });
+                AddLog("Start process: Draw Wireframe", LogLevel.INFO);
                 MeshGeometry3D kWireframe = kMesh.ToWireframe(0.005);
                 //DiffuseMaterial kWireframeMaterial = new DiffuseMaterial(Brushes.Red);
                 MaterialGroup kWireframeMaterial = new MaterialGroup();
@@ -484,7 +380,7 @@ namespace AVS_WorldGeneration
                 kWireframeMaterial.Children.Add(new EmissiveMaterial(new SolidColorBrush(Color.FromRgb(200, 0, 0))));
                 GeometryModel3D kWireframeModel = new GeometryModel3D(kWireframe, kWireframeMaterial);
                 m_kMainModel3DGroup.Children.Add(kWireframeModel);
-                Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "End process: Draw Wireframe", LogLevel.INFO });
+                AddLog("End process: Draw Wireframe", LogLevel.INFO);
             }
 
             ModelVisual3D kModelVisual = new ModelVisual3D();
@@ -493,7 +389,7 @@ namespace AVS_WorldGeneration
             vpOutputView.Children.Clear();
             GC.Collect();
             vpOutputView.Children.Add(kModelVisual);
-            Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "End process: Draw Voronoi", LogLevel.INFO });
+            AddLog("End process: Draw Voronoi", LogLevel.INFO);
             btnClearVoronoi.IsEnabled = true;
         }
 
@@ -519,13 +415,14 @@ namespace AVS_WorldGeneration
 
         private void BtnUseThreads_Click(object sender, RoutedEventArgs e)
         {
-            if(!int.TryParse(tbxThreadCount.Text, out m_nThreadsInUse))
+            int nThreads = 0;
+            if(!int.TryParse(tbxThreadCount.Text, out nThreads))
             {
                 //HAT NICHT GEKLAPPT TODO: FEHLERMELDUNG ANZEIGEN
             }
             else
             {
-                tllbSystemInfo.Content = "Number of physical processors:\t" + m_nPhysicalProcessors.ToString() + "\nNumber of cores:\t\t\t" + m_nCores.ToString() + "\nNumber of logical processors:\t" + m_nLogicalProcessors.ToString() + "\nNumber of threads in use:\t\t" + m_nThreadsInUse.ToString();
+                m_cDistributionManager.UpdateOwnThreads(nThreads);
             }
         }
 
@@ -535,12 +432,6 @@ namespace AVS_WorldGeneration
             m_cDistributionManager.SearchNodes();
         }
         
-        private void BtnCreateDistributionNetwork_Click(object sender, RoutedEventArgs e)
-        {
-            //m_cNetworkManager.InitializeNetwork(acAvailableNodes);
-            //m_bNetworkDistribution = true;
-        }
-
         public void TglNode_Click(object sender, RoutedEventArgs e)
         {
             System.Windows.Controls.CheckBox cbxCheck = (sender as System.Windows.Controls.CheckBox);
@@ -579,71 +470,39 @@ namespace AVS_WorldGeneration
         }
 
         private void GenerateVoronoiThread(object sender, DoWorkEventArgs e)
-        {
+        {/*
             while (m_nVoronoiFinished_Threaded < m_nThreadsInUse)
             {
                 Thread.Sleep(1);
             }
-            Application.Current.Dispatcher.Invoke(new Action(() => GenerateVoronoiEnd()));
+            Application.Current.Dispatcher.Invoke(new Action(() => GenerateVoronoiEnd()));*/
         }
 
-        private void GenerateVoronoiVectors(object sender, DoWorkEventArgs e)
+        public void AddLog(string sMessage, LogLevel eLogLevel)
         {
-            VoronoiProgress updatePB = IncreaseProgress;
-            double dOneStep = 100.0 / m_nThreadsInUse / (double)e.Argument;//(m_dVoronoiCount_Threaded + (m_dVoronoiCount_Threaded * 0.33f));
-            List<BenTools.Mathematics.Vector> acTempList = new List<BenTools.Mathematics.Vector>();
-
-            for (int i = 0; i < (double)e.Argument; i++)
-            {
-                m_dVector = new double[] { m_kRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum, m_kRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum };
-                acTempList.Add(new BenTools.Mathematics.Vector(m_dVector));
-                pbGenerateVoronoi.Dispatcher.Invoke(updatePB, System.Windows.Threading.DispatcherPriority.Background, new object[] { dOneStep });
-            }
-
-            lock(m_cObjThreadLocking)
-            {
-                m_acVectors.Add(acTempList);
-            }
-        }
-
-        private void GenerateVoronoiVectorsFinished(object sender, RunWorkerCompletedEventArgs e)
-        {
-            m_nVoronoiFinished_Threaded++;
-            if (e.Cancelled)
-            {
-                Application.Current.Dispatcher.Invoke(new Action(() => AddLog("End process: Thread " + m_nVoronoiFinished_Threaded.ToString() + "/" + m_nThreadsInUse.ToString() + " Generation", LogLevel.WARN)));
-            }
-            else if (e.Error != null)
-            {
-                Application.Current.Dispatcher.Invoke(new Action(() => AddLog("End process: Thread " + m_nVoronoiFinished_Threaded.ToString() + "/" + m_nThreadsInUse.ToString() + " Generation", LogLevel.ERROR)));
-            }
-            else
-            {
-                Application.Current.Dispatcher.Invoke(new Action(() => AddLog("End process: Thread " + m_nVoronoiFinished_Threaded.ToString() + "/" + m_nThreadsInUse.ToString() + " Generation", LogLevel.INFO)));
-            }
-        }
-        
-        private void AddLog(string sMessage, LogLevel eLogLevel)
-        {
-            Logging systemLog = this.Log;
-            Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { sMessage, eLogLevel });
+            Dispatcher.CurrentDispatcher.Invoke(m_cSystemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { sMessage, eLogLevel });
         }
 
         private double m_dProgressStepForNetworkDistribution;
 
         public void AddNetworkResult(List<BenTools.Mathematics.Vector> acResult)
-        {
+        {/*
             VoronoiProgress updatePB = IncreaseProgress;
             pbGenerateVoronoi.Dispatcher.Invoke(updatePB, System.Windows.Threading.DispatcherPriority.Background, new object[] { m_dProgressStepForNetworkDistribution });
             lock (m_cObjThreadLocking)
             {
                 m_acVectors.Add(acResult);
-            }
+            }*/
         }
         
         #endregion
 
         #region Log System
+
+        public void LogVoronoiProgress(double dStep)
+        {
+            pbGenerateVoronoi.Dispatcher.Invoke(m_cUpdatePB, System.Windows.Threading.DispatcherPriority.Background, new object[] { dStep });
+        }
 
         private void BtnClearLogPreview_Click(object sender, RoutedEventArgs e)
         {
