@@ -44,6 +44,9 @@ namespace AVS_WorldGeneration
         private Random m_kRnd = new Random();
         private int m_nSeed = 0;
 
+        private Dictionary<Guid, List<List<double[]>>> m_dicResults = new Dictionary<Guid, List<List<double[]>>>();
+        private List<Guid> m_acIndexes = new List<Guid>();
+
         private double m_dMinimum;
         private double m_dMaximum;
 
@@ -68,6 +71,18 @@ namespace AVS_WorldGeneration
         private int m_nBroadcastReceiveBufferLength;
         private SocketAsyncEventArgs m_cBroadcastArgs;
         private bool m_bBroadcastClose;
+
+        #endregion
+
+        #region Communication Socket
+
+        private List<Socket> m_acCommunicationSockets;
+        private EndPoint m_cCommunicationApplicationEndpoint;
+        private List<EndPoint> m_acCommunicationServiceEndPoints;
+        private List<byte[]> m_aabCommunicationReceiveBuffers;
+        private int m_nCommunicationReceiveBufferLength;
+        private List<SocketAsyncEventArgs> m_acCommunicationArgs;
+        private List<bool> m_abCommunicationClose;
 
         #endregion
 
@@ -143,13 +158,111 @@ namespace AVS_WorldGeneration
             }
         }
 
+        public void InitializeCommunication()
+        {
+            m_nCommunicationReceiveBufferLength = 1024;
+            m_cCommunicationApplicationEndpoint = new IPEndPoint(IPHelper.GetLocalIPAddress(), 55261);
+
+            m_acCommunicationSockets = new List<Socket>();
+            m_acCommunicationServiceEndPoints = new List<EndPoint>();
+            m_aabCommunicationReceiveBuffers = new List<byte[]>();
+            m_acCommunicationArgs = new List<SocketAsyncEventArgs>();
+            m_abCommunicationClose = new List<bool>();
+        }
+
+        public void SendCalculationDataToNode(IPAddress cIPAddress, Helper.NodeCalculationData cData)
+        {
+            try
+            {
+                Helper.NodeResult cResult = new Helper.NodeResult();
+                cResult.cID = Guid.NewGuid();
+                cResult.acVectors = new List<List<double[]>>();
+
+                int nLoopsPerThread = cData.nCount / cData.bThreads;
+                int nExtraLoops = cData.nCount % cData.bThreads;
+
+                for(int nThreadCount = 0; nThreadCount < cData.bThreads; nThreadCount++)
+                {
+                    cResult.acVectors.Add(new List<double[]>());
+                    int nLoops = nLoopsPerThread + nExtraLoops;
+                    for (int nLoopCount = 0; nLoopCount < nLoops; nLoopCount++)
+                    {
+                        cResult.acVectors[nThreadCount].Add(new double[2]);
+                    }
+                    nExtraLoops = 0;
+                }
+
+                int nCommunicationReceiveBufferLength = Helper.GetBytes(cResult).Length;
+                Application.Current.Dispatcher.Invoke(new Action(() => (Application.Current.MainWindow as MainWindow).AddLog("Estimated receive buffer length: " + (nCommunicationReceiveBufferLength + 1).ToString(), LogLevel.INFO)));
+
+                m_aabCommunicationReceiveBuffers.Add(new byte[nCommunicationReceiveBufferLength + 1]);
+                m_acCommunicationServiceEndPoints.Add(new IPEndPoint(cIPAddress, 7345));
+                m_abCommunicationClose.Add(false);
+
+                m_acCommunicationSockets.Add(new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp));
+                m_acCommunicationSockets.Last().SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);
+                m_acCommunicationSockets.Last().Bind(m_cCommunicationApplicationEndpoint);
+
+                byte[] abCommunicationContent = new byte[m_nCommunicationReceiveBufferLength];
+                abCommunicationContent[0] = Helper.SocketCommunicationProtocol.GENERATE_VORONOI;
+                byte[] abData = Helper.GetBytes(cData);
+                if(abData.Length > 255)
+                {
+                    Application.Current.Dispatcher.Invoke(new Action(() => (Application.Current.MainWindow as MainWindow).AddLog("Byte Array Length is over 255!", LogLevel.WARN)));
+                }
+                abCommunicationContent[1] = Convert.ToByte(abData.Length);
+                System.Buffer.BlockCopy(abData, 0, abCommunicationContent, 2, abData.Length);
+
+                m_acCommunicationArgs.Add(new SocketAsyncEventArgs());
+                m_acCommunicationArgs.Last().RemoteEndPoint = m_acCommunicationServiceEndPoints.Last();
+                m_acCommunicationArgs.Last().SetBuffer(m_aabCommunicationReceiveBuffers.Last(), 0, nCommunicationReceiveBufferLength + 1);
+
+                m_acCommunicationArgs.Last().Completed += ResultCompleted;
+
+                m_acCommunicationSockets.Last().ReceiveMessageFromAsync(m_acCommunicationArgs.Last());
+                m_acCommunicationSockets.Last().SendTo(abCommunicationContent, m_acCommunicationServiceEndPoints.Last());
+
+                Application.Current.Dispatcher.Invoke(new Action(() => (Application.Current.MainWindow as MainWindow).AddLog("Start process: Service " + m_acCommunicationSockets.Count.ToString(), LogLevel.INFO)));
+
+                Debug.WriteLine("Sended data to " + cIPAddress.ToString());
+            }
+            catch (Exception cException)
+            {
+                Debug.WriteLine("Couldn't create communication socket: " + cException.Message);
+            }
+        }
+
+        private int m_nResultsReceived = 0;
+
+        private void ResultCompleted(object cSender, SocketAsyncEventArgs cArgs)
+        {
+            byte bHeaderProtocol = cArgs.Buffer[0];
+
+            if (bHeaderProtocol == Helper.SocketCommunicationProtocol.SEND_VECTORS_BACK)
+            {
+                Application.Current.Dispatcher.Invoke(new Action(() => (Application.Current.MainWindow as MainWindow).AddLog("Received results from Service " + (m_nResultsReceived + 1).ToString(), LogLevel.INFO)));
+
+                byte[] acResults = new byte[cArgs.Buffer.Length - 1];
+                Buffer.BlockCopy(cArgs.Buffer, 1, acResults, 0, cArgs.Buffer.Length - 1);
+
+                Helper.NodeResult cResult = Helper.GetNodeResult(acResults);
+
+                m_dicResults[cResult.cID] = cResult.acVectors;
+
+                m_nResultsReceived++;
+
+                if(m_nResultsReceived >= acAvailableNodes.FindAll(o => o.bInUse).Count)
+                {
+                    Application.Current.Dispatcher.Invoke(new Action(() => (Application.Current.MainWindow as MainWindow).AddLog("Received all results from all Services!", LogLevel.INFO)));
+                }
+            }
+        }
+
         public void DistributeWork(int nSeed, double dVoronoiCount)
         {
             m_nSeed = nSeed;
             m_kRnd = new Random(m_nSeed);
-
-
-
+            
             if (acAvailableNodes.Count <= 0)
             {
                 // LOCAL DISTRIBUTED
@@ -194,6 +307,32 @@ namespace AVS_WorldGeneration
             else
             {
                 // NETWORK DISTRIBUTED
+                InitializeCommunication();
+
+                List<Helper.Node> acDistributors = acAvailableNodes.FindAll(o => o.bInUse);
+
+                int nCountPerDistributor = Convert.ToInt32(dVoronoiCount / acDistributors.Count);
+                int nExtra = Convert.ToInt32(dVoronoiCount % acDistributors.Count);
+                int nRandomStart = 0;
+
+                for(int i = 0; i < acDistributors.Count; i++)
+                {
+                    Helper.NodeCalculationData cData = new Helper.NodeCalculationData();
+                    cData.dMinimum = m_dMinimum;
+                    cData.dMaximum = m_dMaximum;
+                    cData.bThreads = acDistributors[i].bThreads;
+                    cData.nCount = nCountPerDistributor + nExtra;
+                    cData.nSeed = m_nSeed;
+                    cData.nRandomStart = nRandomStart;
+                    cData.cID = Guid.NewGuid();
+                    nExtra = 0;
+                    nRandomStart += cData.nCount;
+
+                    m_dicResults.Add(cData.cID, null);
+                    m_acIndexes.Add(cData.cID);
+
+                    SendCalculationDataToNode(acDistributors[i].cIPAddress, cData);
+                }
             }
         }
 
@@ -237,7 +376,7 @@ namespace AVS_WorldGeneration
                 nodeInfos = (Helper.NodeInfos)Marshal.PtrToStructure(i, nodeInfos.GetType());
                 Marshal.FreeHGlobal(i);
 
-                acAvailableNodes.Add(new Helper.Node((((IPEndPoint)cArgs.RemoteEndPoint).Address.ToString() + ":" + ((IPEndPoint)cArgs.RemoteEndPoint).Port.ToString()), nodeInfos));
+                acAvailableNodes.Add(new Helper.Node((((IPEndPoint)cArgs.RemoteEndPoint).Address.ToString() + ":" + ((IPEndPoint)cArgs.RemoteEndPoint).Port.ToString()), ((IPEndPoint)cArgs.RemoteEndPoint).Address, nodeInfos));
 
                 Debug.WriteLine("Added Node!");
             }

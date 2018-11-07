@@ -232,25 +232,6 @@ namespace AVS_WorldGeneration
         private void GenerateVoronoi()
         {
             /*
-            Logging systemLog = this.Log;
-            int nSeed = 0;
-            if (!int.TryParse(tbxSeed.Text, out nSeed))
-            {
-                Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Seed contains illegal characters!", LogLevel.WARN });
-                return;
-            }
-            m_nSeed = nSeed;
-            m_kRnd = new Random(m_nSeed);
-
-            VoronoiProgress updatePB = IncreaseProgress;
-
-            double dVoronoiCount = 0;
-            if (!double.TryParse(tbxVoronoiLoopCount.Text, out dVoronoiCount))
-            {
-                Dispatcher.CurrentDispatcher.Invoke(systemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { "Loop count contains illegal characters!", LogLevel.WARN });
-                return;
-            }
-
             if (m_bNetworkDistribution)
             {
                 List<IPAddress> acAddresses = new List<IPAddress>();
@@ -263,7 +244,7 @@ namespace AVS_WorldGeneration
                 {
                     acAddresses.Add(cDist.cAddress);
 
-                    //WcfCommunication.VoronoiData cData = new WcfCommunication.VoronoiData();
+                    WcfCommunication.VoronoiData cData = new WcfCommunication.VoronoiData();
 
                     //cData.Minimum = m_dMinimum;
                     //cData.Maximum = m_dMaximum;
@@ -278,12 +259,12 @@ namespace AVS_WorldGeneration
             else
             {
 
-                /*m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMinimum, dMinimum }));
+                m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMinimum, dMinimum }));
                 m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMinimum, dMaximum }));
                 m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMaximum, dMinimum }));
                 m_akVectors.Add(new BenTools.Mathematics.Vector(new double[] { dMaximum, dMaximum }));
             }
-    */
+            */
         }
 
         public void GenerateVoronoiEnd()
@@ -468,16 +449,7 @@ namespace AVS_WorldGeneration
             lbxNodes.Items.Clear();
             lbxNodes.ItemsSource = m_cDistributionManager.acAvailableNodes;
         }
-
-        private void GenerateVoronoiThread(object sender, DoWorkEventArgs e)
-        {/*
-            while (m_nVoronoiFinished_Threaded < m_nThreadsInUse)
-            {
-                Thread.Sleep(1);
-            }
-            Application.Current.Dispatcher.Invoke(new Action(() => GenerateVoronoiEnd()));*/
-        }
-
+        
         public void AddLog(string sMessage, LogLevel eLogLevel)
         {
             Dispatcher.CurrentDispatcher.Invoke(m_cSystemLog, System.Windows.Threading.DispatcherPriority.Background, new object[] { sMessage, eLogLevel });

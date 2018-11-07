@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.InteropServices;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media.Media3D;
@@ -167,16 +170,18 @@ namespace AVS_WorldGeneration
         {
             public bool bInUse { get; set; }
             public string sIPAddress { get; set; }
+            public IPAddress cIPAddress { get; set; }
             public NodeInfos cNodeInfo;
             public byte bCores { get { return cNodeInfo.bCores; } }
             public byte bProcessorsPhysical { get { return cNodeInfo.bProcessorsPhysical; } }
             public byte bProcessorsLogical { get { return cNodeInfo.bProcessorsLogical; } }
             public byte bThreads { get; set; }
 
-            public Node(string _sIPAddress, NodeInfos _cNodeInfo)
+            public Node(string _sIPAddress, IPAddress _cIPAddress, NodeInfos _cNodeInfo)
             {
                 bInUse = true;
                 sIPAddress = _sIPAddress;
+                cIPAddress = _cIPAddress;
                 cNodeInfo = new NodeInfos();
                 cNodeInfo.bCores = _cNodeInfo.bCores;
                 cNodeInfo.bProcessorsPhysical = _cNodeInfo.bProcessorsPhysical;
@@ -191,10 +196,59 @@ namespace AVS_WorldGeneration
             public byte bProcessorsPhysical { get; set; }
             public byte bProcessorsLogical { get; set; }
         }
+        
+        public struct NodeCalculationData
+        {
+            public double dMinimum;
+            public double dMaximum;
+            public byte bThreads;
+            public int nCount;
+            public int nSeed;
+            public int nRandomStart;
+            public Guid cID;
+        }
 
+        public static byte[] GetBytes(NodeCalculationData cData)
+        {
+            int nSize = Marshal.SizeOf(cData);
+            byte[] cArray = new byte[nSize];
+
+            IntPtr cPointer = Marshal.AllocHGlobal(nSize);
+            Marshal.StructureToPtr(cData, cPointer, true);
+            Marshal.Copy(cPointer, cArray, 0, nSize);
+            Marshal.FreeHGlobal(cPointer);
+            return cArray;
+        }
+
+        public static byte[] GetBytes(NodeResult cData)
+        {
+            BinaryFormatter cFormatter = new BinaryFormatter();
+            MemoryStream cStream = new MemoryStream();
+            cFormatter.Serialize(cStream, cData);
+
+            return cStream.ToArray();
+        }
+
+        [Serializable]
         public struct NodeResult
         {
-            public byte bAnswer { get; set; }
+            public Guid cID;
+            public List<List<double[]>> acVectors;
+        }
+
+        public static NodeResult GetNodeResult(byte[] acSourceBytes)
+        {
+            NodeResult cData = new NodeResult();
+
+            int nSize = Marshal.SizeOf(cData);
+            IntPtr cPointer = Marshal.AllocHGlobal(nSize);
+
+            Marshal.Copy(acSourceBytes, 0, cPointer, nSize);
+
+            cData = (NodeResult)Marshal.PtrToStructure(cPointer, cData.GetType());
+            Marshal.FreeHGlobal(cPointer);
+
+            return cData;
         }
     }
 }
