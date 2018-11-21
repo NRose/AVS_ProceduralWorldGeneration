@@ -42,6 +42,7 @@ namespace AVS_NodeCommunication
     {
         public int nCount;
         public int nRandomStart;
+        public int nIndex;
     }
 
     public class SocketCommunicationListener
@@ -158,6 +159,9 @@ namespace AVS_NodeCommunication
                         ThreadObject cThreadArgs = new ThreadObject();
                         cThreadArgs.nCount = nCountPerThread + nExtra;
                         cThreadArgs.nRandomStart = nStartPosition;
+                        cThreadArgs.nIndex = i;
+
+                        m_acVectors.Add(new List<double[]>());
 
                         cWorker.RunWorkerAsync(cThreadArgs);
                         nExtra = 0;
@@ -289,7 +293,7 @@ namespace AVS_NodeCommunication
             
             lock (m_cObjThreadLocking)
             {
-                m_acVectors.Add(acTempList);
+                m_acVectors[cThreadArgs.nIndex] = acTempList;
             }
         }
 

@@ -76,7 +76,7 @@ namespace AVS_WorldGeneration
         #region Communication Socket
 
         private List<Socket> m_acCommunicationSockets;
-        private EndPoint m_cCommunicationApplicationEndpoint;
+        private List<EndPoint> m_acCommunicationApplicationEndpoint;
         private List<EndPoint> m_acCommunicationServiceEndPoints;
         private List<byte[]> m_aabCommunicationReceiveBuffers;
         private int m_nCommunicationReceiveBufferLength;
@@ -159,8 +159,9 @@ namespace AVS_WorldGeneration
         public void InitializeCommunication()
         {
             m_nCommunicationReceiveBufferLength = 1024;
-            m_cCommunicationApplicationEndpoint = new IPEndPoint(IPHelper.GetLocalIPAddress(), 55261);
+            //m_cCommunicationApplicationEndpoint = new IPEndPoint(IPHelper.GetLocalIPAddress(), 55261);
 
+            m_acCommunicationApplicationEndpoint = new List<EndPoint>();
             m_acCommunicationSockets = new List<Socket>();
             m_acCommunicationServiceEndPoints = new List<EndPoint>();
             m_aabCommunicationReceiveBuffers = new List<byte[]>();
@@ -168,7 +169,7 @@ namespace AVS_WorldGeneration
             m_abCommunicationClose = new List<bool>();
         }
 
-        public void SendCalculationDataToNode(IPAddress cIPAddress, Helper.NodeCalculationData cData)
+        public void SendCalculationDataToNode(IPAddress cIPAddress, Helper.NodeCalculationData cData, int nServiceNumber)
         {
             m_cBroadcastSocket.Close();
             try
@@ -200,7 +201,9 @@ namespace AVS_WorldGeneration
 
                 m_acCommunicationSockets.Add(new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp));
                 m_acCommunicationSockets.Last().SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);
-                m_acCommunicationSockets.Last().Bind(m_cCommunicationApplicationEndpoint);
+
+                m_acCommunicationApplicationEndpoint.Add(new IPEndPoint(IPHelper.GetLocalIPAddress(), 55261 + nServiceNumber));
+                m_acCommunicationSockets.Last().Bind(m_acCommunicationApplicationEndpoint.Last());
 
                 byte[] abCommunicationContent = new byte[m_nCommunicationReceiveBufferLength];
                 abCommunicationContent[0] = Helper.SocketCommunicationProtocol.GENERATE_VORONOI;
@@ -213,7 +216,7 @@ namespace AVS_WorldGeneration
                 System.Buffer.BlockCopy(abData, 0, abCommunicationContent, 2, abData.Length);
 
                 m_acCommunicationArgs.Add(new SocketAsyncEventArgs());
-                m_acCommunicationArgs.Last().RemoteEndPoint = m_cCommunicationApplicationEndpoint;
+                m_acCommunicationArgs.Last().RemoteEndPoint = m_acCommunicationApplicationEndpoint.Last();
                 m_acCommunicationArgs.Last().SetBuffer(m_aabCommunicationReceiveBuffers.Last(), 0, nCommunicationReceiveBufferLength + 1);
 
                 m_acCommunicationArgs.Last().Completed += ResultCompleted;
@@ -348,7 +351,7 @@ namespace AVS_WorldGeneration
                     m_dicResults.Add(cData.cID, null);
                     m_acIndexes.Add(cData.cID);
 
-                    SendCalculationDataToNode(acDistributors[i].cIPAddress, cData);
+                    SendCalculationDataToNode(acDistributors[i].cIPAddress, cData, i);
                 }
             }
         }
