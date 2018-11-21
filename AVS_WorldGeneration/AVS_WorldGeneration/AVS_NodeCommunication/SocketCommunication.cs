@@ -196,11 +196,16 @@ namespace AVS_NodeCommunication
             }
             else if (protocol == SocketCommunicationProtocol.SEND_VECTORS_BACK)
             {
+                m_cEvent.WriteEntry("INIT Result Data");
                 byte[] abResultData = GetResultArray(m_acVectors);
+                m_cEvent.WriteEntry("INIT Result Array");
                 byte[] abResultArray = new byte[abResultData.Length + 1];
+                m_cEvent.WriteEntry("INIT Result Header");
                 abResultArray[0] = SocketCommunicationProtocol.SEND_VECTORS_BACK;
+                m_cEvent.WriteEntry("BLOCK COPY Result Data");
                 Buffer.BlockCopy(abResultData, 0, abResultArray, 1, abResultData.Length);
 
+                m_cEvent.WriteEntry("Send Result Data\nArray Length: " + (abResultData.Length + 1).ToString());
                 socket.SendTo(abResultArray, destinationendpoint);
                 m_cEvent.WriteEntry("Sending Result Byte Array back to Application!\nArray Length: " + (abResultData.Length + 1).ToString());
             }
