@@ -65,14 +65,13 @@ namespace AVS_NodeCommunication
         private double m_dMaximum;
 
         private int m_nSeed;
+        private int m_nRandomStart;
 
         private byte m_bThreads;
         private Object m_cObjThreadLocking = new Object();
         private Object m_cObjThreadLockingAnswer = new Object();
         private byte m_bThreadsFinished;
-
-        private Random m_cRnd;
-
+        
         private List<List<double[]>> m_acVectors = new List<List<double[]>>();
 
         #endregion
@@ -136,10 +135,10 @@ namespace AVS_NodeCommunication
                     m_cID = cData.cID;
                     m_bThreadsFinished = 0;
                     m_nSeed = cData.nSeed;
+                    m_nRandomStart = cData.nRandomStart;
                     int nCountPerThread = cData.nCount / cData.bThreads;
                     int nExtra = cData.nCount % cData.bThreads;
-                    int nStartPosition = 0;
-                    m_cRnd = new Random(m_nSeed);
+                    int nStartPosition = m_nRandomStart;
 
                     m_cRemoteEndpointForAnswer = (IPEndPoint)e.RemoteEndPoint;
 
@@ -277,18 +276,14 @@ namespace AVS_NodeCommunication
         private void GenerateVoronoiVectors(object sender, DoWorkEventArgs e)
         {
             ThreadObject cThreadArgs = (ThreadObject)(e.Argument);
-            /*
-            for (int i = 0; i < cThreadArgs.nRandomStart; i++)
-            {
-                double dTemp = cRnd.NextDouble();
-            }
-            */
+            Random cRnd = new Random(m_nSeed + cThreadArgs.nRandomStart);
+
             double dOneStep = 100.0 / m_bThreads / (double)cThreadArgs.nCount;
             List<double[]> acTempList = new List<double[]>();
             
             for (int i = 0; i < cThreadArgs.nCount; i++)
             {
-                double[] adVector = new double[] { m_cRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum, m_cRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum };
+                double[] adVector = new double[] { cRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum, cRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum };
                 acTempList.Add(adVector);
             }
             

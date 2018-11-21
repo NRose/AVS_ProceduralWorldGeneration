@@ -41,7 +41,6 @@ namespace AVS_WorldGeneration
         }
 
         private List<List<BenTools.Mathematics.Vector>> m_acVectors = new List<List<BenTools.Mathematics.Vector>>();
-        private Random m_kRnd = new Random();
         private int m_nSeed = 0;
 
         private Dictionary<Guid, List<List<double[]>>> m_dicResults = new Dictionary<Guid, List<List<double[]>>>();
@@ -93,8 +92,7 @@ namespace AVS_WorldGeneration
 
             acAvailableNodes = new List<Helper.Node>();
             
-            m_nSeed = m_kRnd.Next();
-            m_kRnd = new Random(m_nSeed);
+            m_nSeed = new Random().Next();
             (Application.Current.MainWindow as MainWindow).tbxSeed.Text = m_nSeed.ToString();
 
             foreach (var item in new System.Management.ManagementObjectSearcher("Select * from Win32_ComputerSystem").Get())
@@ -276,7 +274,6 @@ namespace AVS_WorldGeneration
         public void DistributeWork(int nSeed, double dVoronoiCount)
         {
             m_nSeed = nSeed;
-            m_kRnd = new Random(m_nSeed);
             
             if (acAvailableNodes.Count <= 0)
             {
@@ -312,10 +309,15 @@ namespace AVS_WorldGeneration
                         WorkerReportsProgress = false,
                         WorkerSupportsCancellation = false
                     };
+
+                    Helper.ThreadOpts cOpts = new Helper.ThreadOpts();
+                    cOpts.dLoops = dVoronoiCount / m_nThreadsInUse + dExtra;
+                    cOpts.nStartNumber = i;
+
                     cWorker.DoWork += GenerateVoronoiVectors;
                     cWorker.RunWorkerCompleted += GenerateVoronoiVectorsFinished;
 
-                    cWorker.RunWorkerAsync(dVoronoiCount / m_nThreadsInUse + dExtra);
+                    cWorker.RunWorkerAsync(cOpts);
                     dExtra = 0.0;
                 }
             }
@@ -405,12 +407,16 @@ namespace AVS_WorldGeneration
         
         private void GenerateVoronoiVectors(object sender, DoWorkEventArgs e)
         {
-            double dOneStep = 100.0 / m_nThreadsInUse / (double)e.Argument;
+            Helper.ThreadOpts cOpts = (Helper.ThreadOpts)e.Argument;
+
+            Random cRnd = new Random(m_nSeed + cOpts.nStartNumber);
+
+            double dOneStep = 100.0 / m_nThreadsInUse / cOpts.dLoops;
             List<BenTools.Mathematics.Vector> acTempList = new List<BenTools.Mathematics.Vector>();
 
-            for (int i = 0; i < (double)e.Argument; i++)
+            for (int i = 0; i < cOpts.dLoops; i++)
             {
-                double[] adVector = new double[] { m_kRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum, m_kRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum };
+                double[] adVector = new double[] { cRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum, cRnd.NextDouble() * (m_dMaximum - m_dMinimum) + m_dMinimum };
                 acTempList.Add(new BenTools.Mathematics.Vector(adVector));
                 Application.Current.Dispatcher.Invoke(new Action(() => (Application.Current.MainWindow as MainWindow).LogVoronoiProgress(dOneStep)));
             }

@@ -261,5 +261,11 @@ namespace AVS_WorldGeneration
             cData.acVectors = cSource.acVectors;
             return cData;
         }
+
+        public struct ThreadOpts
+        {
+            public double dLoops;
+            public int nStartNumber;
+        }
     }
 }
