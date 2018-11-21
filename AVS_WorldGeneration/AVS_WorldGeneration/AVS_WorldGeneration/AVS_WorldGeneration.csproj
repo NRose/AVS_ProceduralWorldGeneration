@@ -156,6 +156,10 @@
     <Content Include="ThirdPartyLibraries\FortuneVoronoi.dll" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\AVS_NodeCommunication\AVS_NodeCommunication.csproj">
+      <Project>{47ba1ed7-18e3-4560-bf74-d7d398c47892}</Project>
+      <Name>AVS_NodeCommunication</Name>
+    </ProjectReference>
     <ProjectReference Include="..\AVS_WcfService\AVS_WcfService.csproj">
       <Project>{B2D57392-57C0-4AF5-8C6B-85929BB217CB}</Project>
       <Name>AVS_WcfService</Name>

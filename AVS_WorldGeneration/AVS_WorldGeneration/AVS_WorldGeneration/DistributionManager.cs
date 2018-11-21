@@ -172,6 +172,7 @@ namespace AVS_WorldGeneration
 
         public void SendCalculationDataToNode(IPAddress cIPAddress, Helper.NodeCalculationData cData)
         {
+            m_cBroadcastSocket.Close();
             try
             {
                 Helper.NodeResult cResult = new Helper.NodeResult();
@@ -214,7 +215,7 @@ namespace AVS_WorldGeneration
                 System.Buffer.BlockCopy(abData, 0, abCommunicationContent, 2, abData.Length);
 
                 m_acCommunicationArgs.Add(new SocketAsyncEventArgs());
-                m_acCommunicationArgs.Last().RemoteEndPoint = m_acCommunicationServiceEndPoints.Last();
+                m_acCommunicationArgs.Last().RemoteEndPoint = m_cCommunicationApplicationEndpoint;
                 m_acCommunicationArgs.Last().SetBuffer(m_aabCommunicationReceiveBuffers.Last(), 0, nCommunicationReceiveBufferLength + 1);
 
                 m_acCommunicationArgs.Last().Completed += ResultCompleted;
@@ -248,12 +249,26 @@ namespace AVS_WorldGeneration
                 Helper.NodeResult cResult = Helper.GetNodeResult(acResults);
 
                 m_dicResults[cResult.cID] = cResult.acVectors;
-
                 m_nResultsReceived++;
-
-                if(m_nResultsReceived >= acAvailableNodes.FindAll(o => o.bInUse).Count)
+                
+                if (m_nResultsReceived >= acAvailableNodes.FindAll(o => o.bInUse).Count)
                 {
+                    m_acVectors = new List<List<BenTools.Mathematics.Vector>>();
+                    for(int i = 0; i < m_acIndexes.Count; i++)
+                    {
+                        foreach(List<double[]> cListPair in m_dicResults[m_acIndexes[i]])
+                        {
+                            List<BenTools.Mathematics.Vector> acVectors = new List<BenTools.Mathematics.Vector>();
+                            foreach (double[] acData in cListPair)
+                            {
+                                acVectors.Add(new BenTools.Mathematics.Vector(acData));
+                            }
+                            m_acVectors.Add(acVectors);
+                        }
+                    }
+
                     Application.Current.Dispatcher.Invoke(new Action(() => (Application.Current.MainWindow as MainWindow).AddLog("Received all results from all Services!", LogLevel.INFO)));
+                    Application.Current.Dispatcher.Invoke(new Action(() => (Application.Current.MainWindow as MainWindow).GenerateVoronoiEnd()));
                 }
             }
         }
@@ -423,7 +438,6 @@ namespace AVS_WorldGeneration
             }
             if(m_nVoronoiFinished_Threaded >= m_nThreadsInUse)
             {
-                (Application.Current.MainWindow as MainWindow).btnDrawVoronoi.IsEnabled = true;
                 Application.Current.Dispatcher.Invoke(new Action(() => (Application.Current.MainWindow as MainWindow).GenerateVoronoiEnd()));
             }
         }

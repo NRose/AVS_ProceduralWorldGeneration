@@ -238,8 +238,8 @@ namespace AVS_WorldGeneration
 
         public static NodeResult GetNodeResult(byte[] acSourceBytes)
         {
+            /*
             NodeResult cData = new NodeResult();
-
             int nSize = Marshal.SizeOf(cData);
             IntPtr cPointer = Marshal.AllocHGlobal(nSize);
 
@@ -247,7 +247,18 @@ namespace AVS_WorldGeneration
 
             cData = (NodeResult)Marshal.PtrToStructure(cPointer, cData.GetType());
             Marshal.FreeHGlobal(cPointer);
+            return cData; */
 
+            BinaryFormatter cFormatter = new BinaryFormatter();
+            MemoryStream cStream = new MemoryStream(acSourceBytes);
+            return InterpretResult((AVS_NodeCommunication.NodeResult)cFormatter.Deserialize(cStream));
+        }
+
+        private static NodeResult InterpretResult(AVS_NodeCommunication.NodeResult cSource)
+        {
+            NodeResult cData = new NodeResult();
+            cData.cID = cSource.cID;
+            cData.acVectors = cSource.acVectors;
             return cData;
         }
     }
