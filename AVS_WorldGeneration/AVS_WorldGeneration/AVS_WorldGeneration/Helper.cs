@@ -8,6 +8,7 @@ using System.Net;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Media.Media3D;
 
@@ -258,6 +259,8 @@ namespace AVS_WorldGeneration
             object cObjStreamResult = cFormatter.Deserialize(cStream);*/
 
             string sData = Encoding.Default.GetString(acSourceBytes);
+            sData = sData.Replace("\0", string.Empty);
+
             AVS_NodeCommunication.NodeResult cNodeResult = JsonConvert.DeserializeObject<AVS_NodeCommunication.NodeResult>(sData);
 
             return InterpretResult(cNodeResult);

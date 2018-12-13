@@ -213,6 +213,7 @@ namespace AVS_NodeCommunication
                     {
                         m_cEvent.WriteEntry("ERROR while sending: " + cEx.Message.ToString());
                     }
+                    Thread.Sleep(100);
                 }
                 m_cEvent.WriteEntry("Sending Result Byte Array back to Application!");
             }
