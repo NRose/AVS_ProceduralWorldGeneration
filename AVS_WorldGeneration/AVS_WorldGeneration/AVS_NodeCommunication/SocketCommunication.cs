@@ -15,6 +15,7 @@ using System.ServiceProcess;
 using System.ComponentModel;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace AVS_NodeCommunication
 {
@@ -198,18 +199,65 @@ namespace AVS_NodeCommunication
             {
                 m_cEvent.WriteEntry("INIT Result Data");
                 byte[] abResultData = GetResultArray(m_acVectors);
-                m_cEvent.WriteEntry("INIT Result Array");
-                byte[] abResultArray = new byte[abResultData.Length + 1];
-                m_cEvent.WriteEntry("INIT Result Header");
-                abResultArray[0] = SocketCommunicationProtocol.SEND_VECTORS_BACK;
-                m_cEvent.WriteEntry("BLOCK COPY Result Data");
-                Buffer.BlockCopy(abResultData, 0, abResultArray, 1, abResultData.Length);
+                m_cEvent.WriteEntry("INIT Result Arrays");
+                List<byte[]> abResultArray = CreateUDPArrays(abResultData);
 
-                m_cEvent.WriteEntry("Send Result Data\nArray Length: " + (abResultData.Length + 1).ToString());
-                socket.SendTo(abResultArray, destinationendpoint);
-                m_cEvent.WriteEntry("Sending Result Byte Array back to Application!\nArray Length: " + (abResultData.Length + 1).ToString());
+                foreach(byte[] cArray in abResultArray)
+                {
+                    m_cEvent.WriteEntry("Send Result Data\nArray Length: " + (cArray.Length).ToString());
+                    try
+                    {
+                        socket.SendTo(cArray, destinationendpoint);
+                    }
+                    catch (Exception cEx)
+                    {
+                        m_cEvent.WriteEntry("ERROR while sending: " + cEx.Message.ToString());
+                    }
+                }
+                m_cEvent.WriteEntry("Sending Result Byte Array back to Application!");
             }
             m_cEvent.WriteEntry("END sending answer to " + ipAddress.ToString() + " on port " + port.ToString());
+        }
+
+        private List<byte[]> CreateUDPArrays(byte[] abResultData)
+        {
+            m_cEvent.WriteEntry("INIT UDP Arrays" + " - Length: " + abResultData.Length.ToString());
+            List<byte[]> acUDPArray = new List<byte[]>();
+            byte nCountCurrent = 1;
+            byte nCountTotal = (byte)Math.Ceiling((float)abResultData.Length / 60000.0f);
+
+            while(abResultData.Length > 0)
+            {
+                byte[] acArray = new byte[60003];
+                acArray[0] = SocketCommunicationProtocol.SEND_VECTORS_BACK;
+                acArray[1] = nCountCurrent;
+                acArray[2] = nCountTotal;
+
+                int nCount = 60000;
+                if (abResultData.Length < 60000)
+                {
+                    nCount = abResultData.Length;
+                }
+                Buffer.BlockCopy(abResultData, 0, acArray, 3, nCount);
+                acUDPArray.Add(acArray);
+
+                int nLength = abResultData.Length;
+                if(abResultData.Length > 60000)
+                {
+                    nLength = abResultData.Length - 60000;
+                    byte[] acTemp = new byte[nLength];
+                    Buffer.BlockCopy(abResultData, 60000, acTemp, 0, acTemp.Length);
+                    abResultData = acTemp;
+                }
+                else
+                {
+                    abResultData = new byte[0];
+                }
+                m_cEvent.WriteEntry("Created Array " + (nCountCurrent).ToString() + " / " + (nCountTotal).ToString() + " - Length: " + nCount.ToString());
+                nCountCurrent++;
+            }
+            m_cEvent.WriteEntry("FINISHED UDP Arrays");
+            return acUDPArray;
         }
 
         private NodeInfos ReadNodeInfos()
@@ -269,11 +317,12 @@ namespace AVS_NodeCommunication
                 cResult.cID = m_cID;
                 cResult.acVectors = acResults;
 
-                BinaryFormatter cFormatter = new BinaryFormatter();
+                /*BinaryFormatter cFormatter = new BinaryFormatter();
                 MemoryStream cStream = new MemoryStream();
-                cFormatter.Serialize(cStream, cResult);
+                cFormatter.Serialize(cStream, cResult);*/
 
-                return cStream.ToArray();
+                string sJSON = JsonConvert.SerializeObject(cResult);
+                return Encoding.Default.GetBytes(sJSON);  //cStream.ToArray();
             }
             catch(Exception cEx)
             {

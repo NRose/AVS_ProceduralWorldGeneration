@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -249,9 +251,16 @@ namespace AVS_WorldGeneration
             Marshal.FreeHGlobal(cPointer);
             return cData; */
 
+            /*
             BinaryFormatter cFormatter = new BinaryFormatter();
             MemoryStream cStream = new MemoryStream(acSourceBytes);
-            return InterpretResult((AVS_NodeCommunication.NodeResult)cFormatter.Deserialize(cStream));
+            cStream.Seek(0, SeekOrigin.Begin);
+            object cObjStreamResult = cFormatter.Deserialize(cStream);*/
+
+            string sData = Encoding.Default.GetString(acSourceBytes);
+            AVS_NodeCommunication.NodeResult cNodeResult = JsonConvert.DeserializeObject<AVS_NodeCommunication.NodeResult>(sData);
+
+            return InterpretResult(cNodeResult);
         }
 
         private static NodeResult InterpretResult(AVS_NodeCommunication.NodeResult cSource)
