@@ -261,7 +261,11 @@ namespace AVS_WorldGeneration
             string sData = Encoding.Default.GetString(acSourceBytes);
             sData = sData.Replace("\0", string.Empty);
 
+            Debug.WriteLine("Create NodeResult");
+
             AVS_NodeCommunication.NodeResult cNodeResult = JsonConvert.DeserializeObject<AVS_NodeCommunication.NodeResult>(sData);
+
+            Debug.WriteLine("Create NodeResult END");
 
             return InterpretResult(cNodeResult);
         }

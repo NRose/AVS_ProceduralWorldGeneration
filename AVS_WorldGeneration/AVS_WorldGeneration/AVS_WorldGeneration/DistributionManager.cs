@@ -221,7 +221,9 @@ namespace AVS_WorldGeneration
 
                 m_dicCommunicationArgs[cIPAddress.ToString()].Completed += ResultCompleted;
 
-                m_dicCommunicationSockets[cIPAddress.ToString()].ReceiveMessageFromAsync(m_dicCommunicationArgs[cIPAddress.ToString()]);
+                EndPoint cPoint = new IPEndPoint(IPHelper.GetLocalIPAddress(), 55261 + nServiceNumber);
+                m_dicCommunicationSockets[cIPAddress.ToString()].ReceiveMessageFromAsync(m_dicCommunicationArgs[cIPAddress.ToString()]); //BeginReceiveMessageFrom(m_dicCommunicationReceiveBuffers[cIPAddress.ToString()], 0, nCommunicationReceiveBufferLength + 1, SocketFlags.None, ref cPoint, ReceiveData, null);
+                                                                                                                                        //ReceiveMessageFromAsync(m_dicCommunicationArgs[cIPAddress.ToString()]);
                 m_dicCommunicationSockets[cIPAddress.ToString()].SendTo(abCommunicationContent, m_acCommunicationServiceEndPoints.Last());
 
                 Application.Current.Dispatcher.Invoke(new Action(() => (Application.Current.MainWindow as MainWindow).AddLog("Start process: Service " + cIPAddress.ToString(), LogLevel.INFO)));
@@ -240,15 +242,31 @@ namespace AVS_WorldGeneration
 
         private Object m_cLockResultCompleted = new Object();
 
+        private List<object> m_acReceivedSender = new List<object>();
+        private List<SocketAsyncEventArgs> m_acReceivedArgs = new List<SocketAsyncEventArgs>();
+
+        private void ReceiveData(IAsyncResult cResult)
+        {
+            
+        }
+
         private void ResultCompleted(object cSender, SocketAsyncEventArgs cArgs)
         {
-            object cTempSender = cSender;
-            SocketAsyncEventArgs cTempArgs = cArgs;
+            object cTS = new object();
+            cTS = cSender;
 
-            m_dicCommunicationSockets[(cTempArgs.RemoteEndPoint as IPEndPoint).Address.ToString()].ReceiveMessageFromAsync(m_dicCommunicationArgs[(cTempArgs.RemoteEndPoint as IPEndPoint).Address.ToString()]);
+            SocketAsyncEventArgs cTA = new SocketAsyncEventArgs();
+            cTA = cArgs;
+
+            m_acReceivedSender.Add(cTS);
+            m_acReceivedArgs.Add(cTA);
+            m_dicCommunicationSockets[(cArgs.RemoteEndPoint as IPEndPoint).Address.ToString()].ReceiveMessageFromAsync(m_dicCommunicationArgs[(cArgs.RemoteEndPoint as IPEndPoint).Address.ToString()]);
 
             lock (m_cLockResultCompleted)
             {
+                object cTempSender = m_acReceivedSender[0];
+                SocketAsyncEventArgs cTempArgs = m_acReceivedArgs[0];
+
                 byte bHeaderProtocol = cTempArgs.Buffer[0];
 
                 if (bHeaderProtocol == Helper.SocketCommunicationProtocol.SEND_VECTORS_BACK)
@@ -271,9 +289,11 @@ namespace AVS_WorldGeneration
                     Application.Current.Dispatcher.Invoke(new Action(() => (Application.Current.MainWindow as MainWindow).AddLog("Received package " + (bPackageCurrent).ToString() + " / " + (bPackageMax).ToString() + " from Service " + ((cTempArgs.RemoteEndPoint as IPEndPoint).Address).ToString(), LogLevel.INFO)));
 
                     byte[] acResults = new byte[60000];// cArgs.Buffer.Length - 3];
-                    Buffer.BlockCopy(cTempArgs.Buffer, 3, acResults, 0, 60000);// acResults.Length);
+                    Buffer.BlockCopy(cTempArgs.Buffer, 3, acResults, 0, 60000); // cTempArgs.Buffer.Length - 3);// acResults.Length);
 
                     m_dicResultsReceived[(cTempArgs.RemoteEndPoint as IPEndPoint).Address.ToString()][bPackageCurrent - 1] = acResults;
+
+                    Debug.WriteLine(bPackageCurrent.ToString());
 
                     bool bFinished = true;
 
@@ -347,6 +367,8 @@ namespace AVS_WorldGeneration
                         Application.Current.Dispatcher.Invoke(new Action(() => (Application.Current.MainWindow as MainWindow).GenerateVoronoiEnd()));
                     }
                 }
+                m_acReceivedSender.RemoveAt(0);
+                m_acReceivedArgs.RemoveAt(0);
             }
         }
 
@@ -526,6 +548,5 @@ namespace AVS_WorldGeneration
                 Application.Current.Dispatcher.Invoke(new Action(() => (Application.Current.MainWindow as MainWindow).GenerateVoronoiEnd()));
             }
         }
-
     }
 }
