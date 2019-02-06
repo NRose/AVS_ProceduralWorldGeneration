@@ -8,6 +8,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
@@ -239,136 +240,34 @@ namespace AVS_WorldGeneration
         private int m_nResultsReceived = 0;
 
         private Dictionary<string, List<byte[]>> m_dicResultsReceived = new Dictionary<string, List<byte[]>>();
-
-        private Object m_cLockResultCompleted = new Object();
-
-        private List<object> m_acReceivedSender = new List<object>();
-        private List<SocketAsyncEventArgs> m_acReceivedArgs = new List<SocketAsyncEventArgs>();
+        
+        private Object m_cLockResultCompletedEntry = new Object();
+        
+        private Dictionary<string, byte[][]> m_dicReceivedArgs = new Dictionary<string, byte[][]>();
 
         private void ReceiveData(IAsyncResult cResult)
         {
             
         }
-
+        
         private void ResultCompleted(object cSender, SocketAsyncEventArgs cArgs)
         {
-            object cTS = new object();
-            cTS = cSender;
-
-            SocketAsyncEventArgs cTA = new SocketAsyncEventArgs();
-            cTA = cArgs;
-
-            m_acReceivedSender.Add(cTS);
-            m_acReceivedArgs.Add(cTA);
-            m_dicCommunicationSockets[(cArgs.RemoteEndPoint as IPEndPoint).Address.ToString()].ReceiveMessageFromAsync(m_dicCommunicationArgs[(cArgs.RemoteEndPoint as IPEndPoint).Address.ToString()]);
-
-            lock (m_cLockResultCompleted)
+            lock (m_cLockResultCompletedEntry)
             {
-                object cTempSender = m_acReceivedSender[0];
-                SocketAsyncEventArgs cTempArgs = m_acReceivedArgs[0];
+                SocketAsyncEventArgs cA = cArgs;
 
-                byte bHeaderProtocol = cTempArgs.Buffer[0];
-
-                if (bHeaderProtocol == Helper.SocketCommunicationProtocol.SEND_VECTORS_BACK)
+                string sIP = (cA.RemoteEndPoint as IPEndPoint).Address.ToString();
+                if (!m_dicReceivedArgs.ContainsKey(sIP))
                 {
-                    byte bPackageCurrent = cTempArgs.Buffer[1];
-                    byte bPackageMax = cTempArgs.Buffer[2];
-
-                    if (!m_dicResultsReceived.ContainsKey((cTempArgs.RemoteEndPoint as IPEndPoint).Address.ToString()))
-                    {
-                        List<byte[]> acResultBytes = new List<byte[]>();
-
-                        for (byte i = 0; i < bPackageMax; i++)
-                        {
-                            acResultBytes.Add(null);
-                        }
-
-                        m_dicResultsReceived.Add((cTempArgs.RemoteEndPoint as IPEndPoint).Address.ToString(), acResultBytes);
-                    }
-
-                    Application.Current.Dispatcher.Invoke(new Action(() => (Application.Current.MainWindow as MainWindow).AddLog("Received package " + (bPackageCurrent).ToString() + " / " + (bPackageMax).ToString() + " from Service " + ((cTempArgs.RemoteEndPoint as IPEndPoint).Address).ToString(), LogLevel.INFO)));
-
-                    byte[] acResults = new byte[60000];// cArgs.Buffer.Length - 3];
-                    Buffer.BlockCopy(cTempArgs.Buffer, 3, acResults, 0, 60000); // cTempArgs.Buffer.Length - 3);// acResults.Length);
-
-                    m_dicResultsReceived[(cTempArgs.RemoteEndPoint as IPEndPoint).Address.ToString()][bPackageCurrent - 1] = acResults;
-
-                    Debug.WriteLine(bPackageCurrent.ToString());
-
-                    bool bFinished = true;
-
-                    foreach (byte[] cArray in m_dicResultsReceived[(cTempArgs.RemoteEndPoint as IPEndPoint).Address.ToString()])
-                    {
-                        if (cArray == null)
-                        {
-                            bFinished = false;
-                            break;
-                        }
-                    }
-
-                    if (bFinished)
-                    {
-                        int nResultLength = 0;
-                        foreach (byte[] cArray in m_dicResultsReceived[(cTempArgs.RemoteEndPoint as IPEndPoint).Address.ToString()])
-                        {
-                            nResultLength += cArray.Length;
-                        }
-
-                        byte[] acFinalResult = new byte[nResultLength];
-                        int nCurrentPosition = 0;
-
-                        foreach (byte[] cArray in m_dicResultsReceived[(cTempArgs.RemoteEndPoint as IPEndPoint).Address.ToString()])
-                        {
-                            Buffer.BlockCopy(cArray, 0, acFinalResult, nCurrentPosition, cArray.Length);
-                            nCurrentPosition += cArray.Length;
-                        }
-
-                        Helper.NodeResult cResult = Helper.GetNodeResult(acFinalResult);
-
-                        m_dicResults[cResult.cID] = cResult.acVectors;
-                        m_nResultsReceived++;
-                    }
-                    else
-                    {
-                        /*
-                        if (m_dicCommunicationArgs.ContainsKey((cTempArgs.RemoteEndPoint as IPEndPoint).Address))
-                        {
-                            m_dicCommunicationArgs.Remove((cTempArgs.RemoteEndPoint as IPEndPoint).Address);
-                        }
-                        m_dicCommunicationArgs.Add((cTempArgs.RemoteEndPoint as IPEndPoint).Address, new SocketAsyncEventArgs());
-                        m_dicCommunicationArgs[(cTempArgs.RemoteEndPoint as IPEndPoint).Address].RemoteEndPoint = m_acCommunicationApplicationEndpoint.Find(o => (o as IPEndPoint).Address == (cTempArgs.RemoteEndPoint as IPEndPoint).Address);
-                        m_dicCommunicationArgs[(cTempArgs.RemoteEndPoint as IPEndPoint).Address].SetBuffer(m_dicCommunicationReceiveBuffers[(cTempArgs.RemoteEndPoint as IPEndPoint).Address], 0, m_dicCommunicationReceiveBuffers[(cTempArgs.RemoteEndPoint as IPEndPoint).Address].Length);
-
-                        m_dicCommunicationArgs[(cTempArgs.RemoteEndPoint as IPEndPoint).Address].Completed += ResultCompleted;
-                        */
-                    }
-
-                    if (m_nResultsReceived >= acAvailableNodes.FindAll(o => o.bInUse).Count)
-                    {
-                        m_acVectors = new List<List<BenTools.Mathematics.Vector>>();
-                        for (int i = 0; i < m_acIndexes.Count; i++)
-                        {
-                            foreach (List<double[]> cListPair in m_dicResults[m_acIndexes[i]])
-                            {
-                                if(cListPair.Count == 0)
-                                {
-                                    break;
-                                }
-                                List<BenTools.Mathematics.Vector> acVectors = new List<BenTools.Mathematics.Vector>();
-                                foreach (double[] acData in cListPair)
-                                {
-                                    acVectors.Add(new BenTools.Mathematics.Vector(acData));
-                                }
-                                m_acVectors.Add(acVectors);
-                            }
-                        }
-
-                        Application.Current.Dispatcher.Invoke(new Action(() => (Application.Current.MainWindow as MainWindow).AddLog("Received all results from all Services!", LogLevel.INFO)));
-                        Application.Current.Dispatcher.Invoke(new Action(() => (Application.Current.MainWindow as MainWindow).GenerateVoronoiEnd()));
-                    }
+                    m_dicReceivedArgs.Add(sIP, new byte[cA.Buffer[2]][]);
                 }
-                m_acReceivedSender.RemoveAt(0);
-                m_acReceivedArgs.RemoveAt(0);
+
+                m_dicReceivedArgs[sIP][cA.Buffer[1]-1] = new byte[cA.Buffer.Length];
+                Buffer.BlockCopy(cA.Buffer, 0, m_dicReceivedArgs[sIP][cA.Buffer[1] - 1], 0, cA.Buffer.Length);
+
+                Application.Current.Dispatcher.Invoke(new Action(() => (Application.Current.MainWindow as MainWindow).AddLog("Received package " + (cA.Buffer[1]).ToString() + " / " + (cA.Buffer[2]).ToString() + " from Service " + sIP, LogLevel.INFO)));
+                
+                m_dicCommunicationSockets[sIP].ReceiveMessageFromAsync(m_dicCommunicationArgs[sIP]);
             }
         }
 
@@ -450,6 +349,158 @@ namespace AVS_WorldGeneration
                     m_acIndexes.Add(cData.cID);
 
                     SendCalculationDataToNode(acDistributors[i].cIPAddress, cData, i);
+                }
+
+                BackgroundWorker cWorker = new BackgroundWorker
+                {
+                    WorkerReportsProgress = false,
+                    WorkerSupportsCancellation = false
+                };
+
+                Helper.DistributorOpts cOpts = new Helper.DistributorOpts();
+                cOpts.nDistributorCount = acDistributors.Count;
+
+                cWorker.DoWork += WaitingForPackages;
+                cWorker.RunWorkerAsync(cOpts);
+            }
+        }
+        
+        private void WaitingForPackages(object sender, DoWorkEventArgs e)
+        {
+            Helper.DistributorOpts cOpts = (Helper.DistributorOpts)e.Argument;
+
+            while(m_dicReceivedArgs.Keys.Count < cOpts.nDistributorCount)
+            {
+                Thread.Sleep(100);
+            }
+
+            bool bAllPackagesReceived = true;
+            do
+            {
+                bAllPackagesReceived = true;
+                foreach (string sKey in m_dicReceivedArgs.Keys)
+                {
+                    foreach(byte[] cArg in m_dicReceivedArgs[sKey])
+                    {
+                        if(cArg == null || cArg.Length <= 0)
+                        {
+                            bAllPackagesReceived = false;
+                            break;
+                        }
+                    }
+                    if(!bAllPackagesReceived)
+                    {
+                        break;
+                    }
+                }
+                Thread.Sleep(100);
+
+            } while (!bAllPackagesReceived);
+
+            foreach (string sKey in m_dicReceivedArgs.Keys)
+            {
+                for (int indexArgs = 0; indexArgs < m_dicReceivedArgs[sKey].Length; indexArgs++)
+                {
+                    byte bHeaderProtocol = m_dicReceivedArgs[sKey][indexArgs][0];
+
+                    if (bHeaderProtocol == Helper.SocketCommunicationProtocol.SEND_VECTORS_BACK)
+                    {
+                        byte bPackageCurrent = m_dicReceivedArgs[sKey][indexArgs][1];
+                        byte bPackageMax = m_dicReceivedArgs[sKey][indexArgs][2];
+
+                        if (!m_dicResultsReceived.ContainsKey(sKey))
+                        {
+                            List<byte[]> acResultBytes = new List<byte[]>();
+
+                            for (byte i = 0; i < bPackageMax; i++)
+                            {
+                                acResultBytes.Add(null);
+                            }
+
+                            m_dicResultsReceived.Add(sKey, acResultBytes);
+                        }
+
+                        Application.Current.Dispatcher.Invoke(new Action(() => (Application.Current.MainWindow as MainWindow).AddLog("Process package " + (bPackageCurrent).ToString() + " / " + (bPackageMax).ToString() + " from Service " + sKey, LogLevel.INFO)));
+
+                        byte[] acResults = new byte[60000];// cArgs.Buffer.Length - 3];
+                        Buffer.BlockCopy(m_dicReceivedArgs[sKey][indexArgs], 3, acResults, 0, 60000); // cTempArgs.Buffer.Length - 3);// acResults.Length);
+
+                        m_dicResultsReceived[sKey][bPackageCurrent - 1] = acResults;
+
+                        Debug.WriteLine(bPackageCurrent.ToString());
+
+                        bool bFinished = true;
+
+                        foreach (byte[] cArray in m_dicResultsReceived[sKey])
+                        {
+                            if (cArray == null)
+                            {
+                                bFinished = false;
+                                break;
+                            }
+                        }
+
+                        if (bFinished)
+                        {
+                            int nResultLength = 0;
+                            foreach (byte[] cArray in m_dicResultsReceived[sKey])
+                            {
+                                nResultLength += cArray.Length;
+                            }
+
+                            byte[] acFinalResult = new byte[nResultLength];
+                            int nCurrentPosition = 0;
+
+                            foreach (byte[] cArray in m_dicResultsReceived[sKey])
+                            {
+                                Buffer.BlockCopy(cArray, 0, acFinalResult, nCurrentPosition, cArray.Length);
+                                nCurrentPosition += cArray.Length;
+                            }
+
+                            Helper.NodeResult cResult = Helper.GetNodeResult(acFinalResult);
+
+                            m_dicResults[cResult.cID] = cResult.acVectors;
+                            m_nResultsReceived++;
+                        }
+                        else
+                        {
+                            /*
+                            if (m_dicCommunicationArgs.ContainsKey((cTempArgs.RemoteEndPoint as IPEndPoint).Address))
+                            {
+                                m_dicCommunicationArgs.Remove((cTempArgs.RemoteEndPoint as IPEndPoint).Address);
+                            }
+                            m_dicCommunicationArgs.Add((cTempArgs.RemoteEndPoint as IPEndPoint).Address, new SocketAsyncEventArgs());
+                            m_dicCommunicationArgs[(cTempArgs.RemoteEndPoint as IPEndPoint).Address].RemoteEndPoint = m_acCommunicationApplicationEndpoint.Find(o => (o as IPEndPoint).Address == (cTempArgs.RemoteEndPoint as IPEndPoint).Address);
+                            m_dicCommunicationArgs[(cTempArgs.RemoteEndPoint as IPEndPoint).Address].SetBuffer(m_dicCommunicationReceiveBuffers[(cTempArgs.RemoteEndPoint as IPEndPoint).Address], 0, m_dicCommunicationReceiveBuffers[(cTempArgs.RemoteEndPoint as IPEndPoint).Address].Length);
+
+                            m_dicCommunicationArgs[(cTempArgs.RemoteEndPoint as IPEndPoint).Address].Completed += ResultCompleted;
+                            */
+                        }
+
+                        if (m_nResultsReceived >= acAvailableNodes.FindAll(o => o.bInUse).Count)
+                        {
+                            m_acVectors = new List<List<BenTools.Mathematics.Vector>>();
+                            for (int i = 0; i < m_acIndexes.Count; i++)
+                            {
+                                foreach (List<double[]> cListPair in m_dicResults[m_acIndexes[i]])
+                                {
+                                    if (cListPair.Count == 0)
+                                    {
+                                        break;
+                                    }
+                                    List<BenTools.Mathematics.Vector> acVectors = new List<BenTools.Mathematics.Vector>();
+                                    foreach (double[] acData in cListPair)
+                                    {
+                                        acVectors.Add(new BenTools.Mathematics.Vector(acData));
+                                    }
+                                    m_acVectors.Add(acVectors);
+                                }
+                            }
+
+                            Application.Current.Dispatcher.Invoke(new Action(() => (Application.Current.MainWindow as MainWindow).AddLog("Received and processed all results from all Services!", LogLevel.INFO)));
+                            Application.Current.Dispatcher.Invoke(new Action(() => (Application.Current.MainWindow as MainWindow).GenerateVoronoiEnd()));
+                        }
+                    }
                 }
             }
         }

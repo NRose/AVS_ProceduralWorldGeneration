@@ -283,5 +283,10 @@ namespace AVS_WorldGeneration
             public double dLoops;
             public int nStartNumber;
         }
+
+        public struct DistributorOpts
+        {
+            public int nDistributorCount;
+        }
     }
 }
